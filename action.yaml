@@ -1,0 +1,163 @@
+name: 'k8s cluster Preview Environments'
+description: 'k8s cluster Preview Environments for every pull request. Supports APIs, frontends, backends, databases, and microservices.'
+author: 'Vibhav Bobade'
+branding:
+  color: 'yellow'
+  icon: 'upload-cloud'
+inputs:
+  # compose-file:
+  #   description: 'An alternate compose file'
+  #   required: false
+  #   default: 'docker-compose.yaml'
+  server:
+    description: 'URL to Uffizzi'
+    required: true
+    default: 'https://app.uffizzi.com'
+  username:
+    description: 'Uffizzi username'
+    required: false
+  password:
+    description: 'Uffizzi password'
+    required: false
+  project:
+    description: 'Uffizzi project slug'
+    required: false
+  cluster-name:
+    description: 'Name of the Uffizzi cluster which is going to get created'
+    required: false
+  # ghcr-username:
+  #   description: 'Username to authenticate to GHCR'
+  #   required: false
+  # ghcr-access-token:
+  #   description: 'Password to authenticate to GHCR'
+  #   required: false
+  # github-event-number:
+  #   description: 'Value of `github.event.number` context'
+  #   required: false
+  # github-ref:
+  #   description: 'Value of `github.ref` context'
+  #   required: false
+  # github-repository:
+  #   description: 'Value of `github.repository` context'
+  #   required: false
+  # request-token:
+  #   descrption: 'A token to access the pipeline information'
+  #   required: false
+  # request-token-url:
+  #   descrption: 'A url where the pipeline information can be accessed'
+  #   required: false
+  # dockerhub-username:
+  #   descrption: 'DockerHub username'
+  #   required: false
+  # dockerhub-password:
+  #   descrption: 'DockerHub password'
+  #   required: false
+  # acr-username:
+  #   description: 'Azure username'
+  #   required: false
+  # acr-password:
+  #   description: 'Azure password'
+  #   required: false
+  # acr-registry-url:
+  #   description: 'Azure registry url'
+  #   required: false
+  # aws-access-key-id:
+  #   description: 'Amazon Web Services access key id'
+  #   required: false
+  # aws-secret-access-key:
+  #   description: 'Amazon Web Services secret access key'
+  #   required: false
+  # aws-registry-url:
+  #   description: 'Amazon Web Services registry url'
+  #   required: false
+  # gcloud-service-key:
+  #   description: 'Google Cloud service key'
+  #   required: false
+  # docker-registry-username:
+  #   description: 'Custom docker registry username'
+  #   required: false
+  # docker-registry-password:
+  #   description: 'Custom docker registry password'
+  #   required: false
+  # docker-registry-url:
+  #   description: 'Custom docker registry url'
+  #   required: false
+  # logger-key:
+  #   description: 'Logger key'
+  #   required: false
+
+# outputs:
+#   url:
+#     description: 'URL where preview was deployed, if successful'
+#   proxy_url:
+#     description: 'URL where show preview process deploying or redirect to preview after deployed'
+#   id:
+#     description: 'ID of preview for later reference'
+#   containers_uri:
+#     description: 'URI to the deployment details'
+#   expiration_interval:
+#     description: "Expiration interval in seconds"
+#   expiration:
+#     description: 'Expiration as a string'
+#   expiration_timestamp:
+#     description: 'Expiration as a UNIX timestamp'
+runs:
+  using: 'composite'
+  steps:
+  - run: |
+          # Identify if a Cluster for this PR exists.
+          if docker run --rm \
+            --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+            --env UFFIZZI_USER=${UFFIZZI_USER} \
+            --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
+            --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
+            ${UFFIZZI_IMAGE} cluster list | grep --quiet ${UFFIZZI_CLUSTER}
+          then
+            # If it already exists, fetch the `kubeconfig` to connect to it.
+            docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+              --env UFFIZZI_USER=${UFFIZZI_USER} \
+              --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
+              --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
+              --mount type=bind,source="$(pwd)",target=/home \
+            ${UFFIZZI_IMAGE} cluster update-kubeconfig \
+              --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
+          else
+            # Create the Cluster if it does not yet exist.
+            docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+              --env UFFIZZI_USER=${UFFIZZI_USER} \
+              --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
+              --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
+              --mount type=bind,source="$(pwd)",target=/home \
+            ${UFFIZZI_IMAGE} cluster create \
+              --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
+            # Create an Ingress for the `web` Service.
+            kubectl create ingress web \
+              --class=nginx \
+              --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5000=vote:5000" \
+              --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5001=result:5001" \
+              --kubeconfig ./kubeconfig
+          fi
+  env:
+    UFFIZZI_PASSWORD: ${{ inputs.password }}
+    UFFIZZI_SERVER: ${{ inputs.server }}
+    UFFIZZI_USER: ${{ inputs.username }}
+    UFFIZZI_PROJECT: ${{ inputs.project }}
+    UFFIZZI_CLUSTER: ${{ inputs.cluster-name }}
+    # GITHUB_USERNAME: ${{ inputs.ghcr-username }}
+    # GITHUB_ACCESS_TOKEN: ${{ inputs.ghcr-access-token }}
+    # REQUEST_TOKEN: ${{ inputs.request-token}}
+    # REQUEST_TOKEN_URL: ${{ inputs.request-token-url }}
+    # DOCKERHUB_USERNAME: ${{ inputs.dockerhub-username }}
+    # DOCKERHUB_PASSWORD: ${{ inputs.dockerhub-password}}
+    # ACR_USERNAME: ${{ inputs.acr-username }}
+    # ACR_PASSWORD: ${{ inputs.acr-password }}
+    # ACR_REGISTRY_URL: ${{ inputs.acr-registry-url }}
+    # AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
+    # AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
+    # AWS_REGISTRY_URL: ${{ inputs.aws-registry-url }}
+    # GCLOUD_SERVICE_KEY: ${{ inputs.gcloud-service-key }}
+    # DOCKER_REGISTRY_USERNAME: ${{ inputs.docker-registry-username }}
+    # DOCKER_REGISTRY_PASSWORD: ${{ inputs.docker-registry-password }}
+    # DOCKER_REGISTRY_URL: ${{ inputs.docker-registry-url }}
+    # CI_WORKFLOW: "true"
+    # LOGGER_KEY: ${{ inputs.logger-key }}
