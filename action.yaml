@@ -145,3 +145,5 @@ runs:
           --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5001=result:5001" \
           --kubeconfig ./kubeconfig
       fi
+
+      echo "::set-output name=kubeconfig::$(cat ./kubeconfig)"
