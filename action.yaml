@@ -106,11 +106,11 @@ runs:
   steps:
   - shell: bash
     env:
-      UFFIZZI_PASSWORD: "${{ inputs.password }}"
-      UFFIZZI_SERVER: "${{ inputs.server }}"
-      UFFIZZI_USER: "${{ inputs.username }}"
-      UFFIZZI_PROJECT: "${{ inputs.project }}"
-      UFFIZZI_CLUSTER: "${{ inputs.cluster-name }}"
+      UFFIZZI_PASSWORD: ${{ inputs.password }}
+      UFFIZZI_SERVER: ${{ inputs.server }}
+      UFFIZZI_USER: ${{ inputs.username }}
+      UFFIZZI_PROJECT: ${{ inputs.project }}
+      UFFIZZI_CLUSTER: ${{ inputs.cluster-name }}
       UFFIZZI_IMAGE: uffizzi/cli:pr-224
     run: |
       # Identify if a Cluster for this PR exists.
