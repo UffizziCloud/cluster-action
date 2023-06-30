@@ -105,13 +105,14 @@ runs:
   using: 'composite'
   steps:
   - shell: bash
+    env:
+      UFFIZZI_PASSWORD: "${{ github.event.inputs.password }}"
+      UFFIZZI_SERVER: "${{ github.event.inputs.server }}"
+      UFFIZZI_USER: "${{ github.event.inputs.username }}"
+      UFFIZZI_PROJECT: "${{ github.event.inputs.project }}" 
+      UFFIZZI_CLUSTER: "${{ github.event.inputs.cluster-name }}"
+      UFFIZZI_IMAGE: uffizzi/cli:pr-224" 
     run: |
-      echo "UFFIZZI_PASSWORD=${{ github.event.inputs.password }}" >> $GITHUB_ENV
-      echo "UFFIZZI_SERVER=${{ github.event.inputs.server }}" >> $GITHUB_ENV
-      echo "UFFIZZI_USER=${{ github.event.inputs.username }}" >> $GITHUB_ENV
-      echo "UFFIZZI_PROJECT=${{ github.event.inputs.project }}" >> $GITHUB_ENV
-      echo "UFFIZZI_CLUSTER=${{ github.event.inputs.cluster-name }}" >> $GITHUB_ENV
-      echo "UFFIZZI_IMAGE=uffizzi/cli:pr-224" >> $GITHUB_ENV
       # Identify if a Cluster for this PR exists.
       if docker run --rm \
         --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
@@ -126,7 +127,7 @@ runs:
           --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
           --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
           --mount type=bind,source="$(pwd)",target=/home \
-        ${UFFIZZI_IMAGE} cluster update-kubeconfig \
+          ${UFFIZZI_IMAGE} cluster update-kubeconfig \
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       else
         # Create the Cluster if it does not yet exist.
