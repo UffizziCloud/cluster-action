@@ -109,9 +109,9 @@ runs:
       UFFIZZI_PASSWORD: "${{ github.event.inputs.password }}"
       UFFIZZI_SERVER: "${{ github.event.inputs.server }}"
       UFFIZZI_USER: "${{ github.event.inputs.username }}"
-      UFFIZZI_PROJECT: "${{ github.event.inputs.project }}" 
+      UFFIZZI_PROJECT: "${{ github.event.inputs.project }}"
       UFFIZZI_CLUSTER: "${{ github.event.inputs.cluster-name }}"
-      UFFIZZI_IMAGE: uffizzi/cli:pr-224" 
+      UFFIZZI_IMAGE: uffizzi/cli:pr-224
     run: |
       # Identify if a Cluster for this PR exists.
       if docker run --rm \
