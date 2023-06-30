@@ -104,60 +104,43 @@ inputs:
 runs:
   using: 'composite'
   steps:
-  - run: |
-          # Identify if a Cluster for this PR exists.
-          if docker run --rm \
-            --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
-            --env UFFIZZI_USER=${UFFIZZI_USER} \
-            --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
-            --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
-            ${UFFIZZI_IMAGE} cluster list | grep --quiet ${UFFIZZI_CLUSTER}
-          then
-            # If it already exists, fetch the `kubeconfig` to connect to it.
-            docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
-              --env UFFIZZI_USER=${UFFIZZI_USER} \
-              --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
-              --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
-              --mount type=bind,source="$(pwd)",target=/home \
-            ${UFFIZZI_IMAGE} cluster update-kubeconfig \
-              --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
-          else
-            # Create the Cluster if it does not yet exist.
-            docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
-              --env UFFIZZI_USER=${UFFIZZI_USER} \
-              --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
-              --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
-              --mount type=bind,source="$(pwd)",target=/home \
-            ${UFFIZZI_IMAGE} cluster create \
-              --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
-            # Create an Ingress for the `web` Service.
-            kubectl create ingress web \
-              --class=nginx \
-              --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5000=vote:5000" \
-              --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5001=result:5001" \
-              --kubeconfig ./kubeconfig
-          fi
-  env:
-    UFFIZZI_PASSWORD: ${{ inputs.password }}
-    UFFIZZI_SERVER: ${{ inputs.server }}
-    UFFIZZI_USER: ${{ inputs.username }}
-    UFFIZZI_PROJECT: ${{ inputs.project }}
-    UFFIZZI_CLUSTER: ${{ inputs.cluster-name }}
-    # GITHUB_USERNAME: ${{ inputs.ghcr-username }}
-    # GITHUB_ACCESS_TOKEN: ${{ inputs.ghcr-access-token }}
-    # REQUEST_TOKEN: ${{ inputs.request-token}}
-    # REQUEST_TOKEN_URL: ${{ inputs.request-token-url }}
-    # DOCKERHUB_USERNAME: ${{ inputs.dockerhub-username }}
-    # DOCKERHUB_PASSWORD: ${{ inputs.dockerhub-password}}
-    # ACR_USERNAME: ${{ inputs.acr-username }}
-    # ACR_PASSWORD: ${{ inputs.acr-password }}
-    # ACR_REGISTRY_URL: ${{ inputs.acr-registry-url }}
-    # AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-    # AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-    # AWS_REGISTRY_URL: ${{ inputs.aws-registry-url }}
-    # GCLOUD_SERVICE_KEY: ${{ inputs.gcloud-service-key }}
-    # DOCKER_REGISTRY_USERNAME: ${{ inputs.docker-registry-username }}
-    # DOCKER_REGISTRY_PASSWORD: ${{ inputs.docker-registry-password }}
-    # DOCKER_REGISTRY_URL: ${{ inputs.docker-registry-url }}
-    # CI_WORKFLOW: "true"
-    # LOGGER_KEY: ${{ inputs.logger-key }}
+  - shell: bash
+    run: |
+      echo "UFFIZZI_PASSWORD=${{ github.event.inputs.password }}" >> $GITHUB_ENV
+      echo "UFFIZZI_SERVER=${{ github.event.inputs.server }}" >> $GITHUB_ENV
+      echo "UFFIZZI_USER=${{ github.event.inputs.username }}" >> $GITHUB_ENV
+      echo "UFFIZZI_PROJECT=${{ github.event.inputs.project }}" >> $GITHUB_ENV
+      echo "UFFIZZI_CLUSTER=${{ github.event.inputs.cluster-name }}" >> $GITHUB_ENV
+      echo "UFFIZZI_IMAGE=uffizzi/cli:pr-224" >> $GITHUB_ENV
+      # Identify if a Cluster for this PR exists.
+      if docker run --rm \
+        --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+        --env UFFIZZI_USER=${UFFIZZI_USER} \
+        --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
+        --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
+        ${UFFIZZI_IMAGE} cluster list | grep --quiet ${UFFIZZI_CLUSTER}
+      then
+        # If it already exists, fetch the `kubeconfig` to connect to it.
+        docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+          --env UFFIZZI_USER=${UFFIZZI_USER} \
+          --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
+          --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
+          --mount type=bind,source="$(pwd)",target=/home \
+        ${UFFIZZI_IMAGE} cluster update-kubeconfig \
+          --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
+      else
+        # Create the Cluster if it does not yet exist.
+        docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+          --env UFFIZZI_USER=${UFFIZZI_USER} \
+          --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
+          --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
+          --mount type=bind,source="$(pwd)",target=/home \
+        ${UFFIZZI_IMAGE} cluster create \
+          --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
+        # Create an Ingress for the `web` Service.
+        kubectl create ingress web \
+          --class=nginx \
+          --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5000=vote:5000" \
+          --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5001=result:5001" \
+          --kubeconfig ./kubeconfig
+      fi
