@@ -138,10 +138,4 @@ runs:
           --mount type=bind,source="$(pwd)",target=/home \
         ${UFFIZZI_IMAGE} cluster create \
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
-        # Create an Ingress for the `web` Service.
-        kubectl create ingress web \
-          --class=nginx \
-          --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5000=vote:5000" \
-          --rule="${UFFIZZI_CLUSTER}.quickstart.app.qa-gke.uffizzi.com:5001=result:5001" \
-          --kubeconfig ./kubeconfig
       fi
