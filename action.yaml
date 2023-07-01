@@ -140,7 +140,8 @@ runs:
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
 
-  - uses: actions/upload-artifact@v3
+  - name: Upload kubeconfig artifact
+    uses: actions/upload-artifact@v3
     with: 
       name: kubeconfig
-      path: /home/kubeconfig    
+      path: /home/kubeconfig
