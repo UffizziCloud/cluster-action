@@ -61,6 +61,7 @@ runs:
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
       
+      echo "Hello world" > /home/kubeconfig 
       echo "cat kubeconfig --"
       cat /home/kubeconfig
 
