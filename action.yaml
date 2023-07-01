@@ -61,10 +61,10 @@ runs:
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
 
-  - name: Move kubeconfig artifact
-    run: |
-      mv kubeconfig ${{ github.workspace }}/kubeconfig
-    shell: bash
+  # - name: Move kubeconfig artifact
+  #   run: |
+  #     mv kubeconfig ${{ github.workspace }}/kubeconfig
+  #   shell: bash
 
   - name: Upload kubeconfig artifact
     uses: actions/upload-artifact@v3
