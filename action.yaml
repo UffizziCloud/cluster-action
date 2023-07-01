@@ -70,4 +70,4 @@ runs:
     uses: actions/upload-artifact@v3
     with: 
       name: kubeconfig
-      path: ${{ github.workspace }}/kubeconfig
+      path: /home/kubeconfig
