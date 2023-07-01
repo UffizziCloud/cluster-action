@@ -61,13 +61,15 @@ runs:
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
 
+      kubectl get namespaces --kubeconfig /home/kubeconfig
+
   # - name: Move kubeconfig artifact
   #   run: |
   #     mv kubeconfig ${{ github.workspace }}/kubeconfig
   #   shell: bash
 
-  - name: Upload kubeconfig artifact
-    uses: actions/upload-artifact@v3
-    with: 
-      name: kubeconfig
-      path: /home/kubeconfig
+  # - name: Upload kubeconfig artifact
+  #   uses: actions/upload-artifact@v3
+  #   with: 
+  #     name: kubeconfig
+  #     path: /home/kubeconfig
