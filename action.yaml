@@ -61,7 +61,13 @@ runs:
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
 
-      kubectl get namespaces --kubeconfig /home/kubeconfig
+      echo "CHECENCOENNODEODDADASD _______________"
+
+      cat kubeconfig
+      pwd
+      ls
+
+      kubectl get namespaces --kubeconfig kubeconfig
 
   # - name: Move kubeconfig artifact
   #   run: |
