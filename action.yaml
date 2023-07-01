@@ -139,5 +139,8 @@ runs:
         ${UFFIZZI_IMAGE} cluster create \
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
-      echo "--DONE--"
-      echo "::set-output name=kubeconfig::$(cat /home/kubeconfig)"
+
+  - uses: actions/upload-artifact@v3
+    with: 
+      name: kubeconfig
+      path: /home/kubeconfig    
