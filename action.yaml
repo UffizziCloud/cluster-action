@@ -59,19 +59,16 @@ runs:
           --mount type=bind,source="$(pwd)",target=/home \
         ${UFFIZZI_IMAGE} cluster create \
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
+        echo "::set-output name=kubeconfig::$(cat /home/kubeconfig)"
       fi
-      
-      echo "Hello world" > /home/kubeconfig 
-      echo "cat kubeconfig --"
-      cat /home/kubeconfig
 
-  - name: Move kubeconfig artifact
-    run: |
-      mv /home/kubeconfig ${{ github.workspace }}/kubeconfig
-    shell: bash
+  # - name: Move kubeconfig artifact
+  #   run: |
+  #     mv /home/kubeconfig ${{ github.workspace }}/kubeconfig
+  #   shell: bash
 
-  - name: Upload kubeconfig artifact
-    uses: actions/upload-artifact@v3
-    with: 
-      name: kubeconfig
-      path: ${{ github.workspace }}/kubeconfig
+  # - name: Upload kubeconfig artifact
+  #   uses: actions/upload-artifact@v3
+  #   with: 
+  #     name: kubeconfig
+  #     path: ${{ github.workspace }}/kubeconfig
