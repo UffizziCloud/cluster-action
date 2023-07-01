@@ -66,8 +66,8 @@ runs:
   #     mv kubeconfig ${{ github.workspace }}/kubeconfig
   #   shell: bash
 
-  - name: Upload kubeconfig artifact
-    uses: actions/upload-artifact@v3
-    with: 
-      name: kubeconfig
-      path: ${{ github.workspace }}/kubeconfig
+  # - name: Upload kubeconfig artifact
+  #   uses: actions/upload-artifact@v3
+  #   with: 
+  #     name: kubeconfig
+  #     path: ${{ github.workspace }}/kubeconfig
