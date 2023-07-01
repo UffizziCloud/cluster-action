@@ -60,22 +60,3 @@ runs:
         ${UFFIZZI_IMAGE} cluster create \
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
-
-      echo "CHECENCOENNODEODDADASD _______________"
-
-      cat kubeconfig
-      pwd
-      ls
-
-      kubectl get namespaces --kubeconfig kubeconfig
-
-  # - name: Move kubeconfig artifact
-  #   run: |
-  #     mv kubeconfig ${{ github.workspace }}/kubeconfig
-  #   shell: bash
-
-  # - name: Upload kubeconfig artifact
-  #   uses: actions/upload-artifact@v3
-  #   with: 
-  #     name: kubeconfig
-  #     path: /home/kubeconfig
