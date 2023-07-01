@@ -5,10 +5,6 @@ branding:
   color: 'yellow'
   icon: 'upload-cloud'
 inputs:
-  # compose-file:
-  #   description: 'An alternate compose file'
-  #   required: false
-  #   default: 'docker-compose.yaml'
   server:
     description: 'URL to Uffizzi'
     required: true
@@ -25,82 +21,7 @@ inputs:
   cluster-name:
     description: 'Name of the Uffizzi cluster which is going to get created'
     required: false
-  # ghcr-username:
-  #   description: 'Username to authenticate to GHCR'
-  #   required: false
-  # ghcr-access-token:
-  #   description: 'Password to authenticate to GHCR'
-  #   required: false
-  # github-event-number:
-  #   description: 'Value of `github.event.number` context'
-  #   required: false
-  # github-ref:
-  #   description: 'Value of `github.ref` context'
-  #   required: false
-  # github-repository:
-  #   description: 'Value of `github.repository` context'
-  #   required: false
-  # request-token:
-  #   descrption: 'A token to access the pipeline information'
-  #   required: false
-  # request-token-url:
-  #   descrption: 'A url where the pipeline information can be accessed'
-  #   required: false
-  # dockerhub-username:
-  #   descrption: 'DockerHub username'
-  #   required: false
-  # dockerhub-password:
-  #   descrption: 'DockerHub password'
-  #   required: false
-  # acr-username:
-  #   description: 'Azure username'
-  #   required: false
-  # acr-password:
-  #   description: 'Azure password'
-  #   required: false
-  # acr-registry-url:
-  #   description: 'Azure registry url'
-  #   required: false
-  # aws-access-key-id:
-  #   description: 'Amazon Web Services access key id'
-  #   required: false
-  # aws-secret-access-key:
-  #   description: 'Amazon Web Services secret access key'
-  #   required: false
-  # aws-registry-url:
-  #   description: 'Amazon Web Services registry url'
-  #   required: false
-  # gcloud-service-key:
-  #   description: 'Google Cloud service key'
-  #   required: false
-  # docker-registry-username:
-  #   description: 'Custom docker registry username'
-  #   required: false
-  # docker-registry-password:
-  #   description: 'Custom docker registry password'
-  #   required: false
-  # docker-registry-url:
-  #   description: 'Custom docker registry url'
-  #   required: false
-  # logger-key:
-  #   description: 'Logger key'
-  #   required: false
 
-# outputs:
-#   url:
-#     description: 'URL where preview was deployed, if successful'
-#   proxy_url:
-#     description: 'URL where show preview process deploying or redirect to preview after deployed'
-#   id:
-#     description: 'ID of preview for later reference'
-#   containers_uri:
-#     description: 'URI to the deployment details'
-#   expiration_interval:
-#     description: "Expiration interval in seconds"
-#   expiration:
-#     description: 'Expiration as a string'
-#   expiration_timestamp:
-#     description: 'Expiration as a UNIX timestamp'
 runs:
   using: 'composite'
   steps:
@@ -140,8 +61,13 @@ runs:
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
 
+  - name: Move kubeconfig artifact
+    run: |
+      mv /home/kubeconfig ${{ github.workspace }}/kubeconfig
+    shell: bash
+
   - name: Upload kubeconfig artifact
     uses: actions/upload-artifact@v3
     with: 
       name: kubeconfig
-      path: /home/kubeconfig
+      path: ${{ github.workspace }}/kubeconfig
