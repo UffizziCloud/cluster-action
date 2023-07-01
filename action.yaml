@@ -60,6 +60,9 @@ runs:
         ${UFFIZZI_IMAGE} cluster create \
           --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
       fi
+      
+      echo "cat kubeconfig --"
+      cat /home/kubeconfig
 
   - name: Move kubeconfig artifact
     run: |
