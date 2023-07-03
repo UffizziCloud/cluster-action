@@ -21,6 +21,9 @@ inputs:
   cluster-name:
     description: 'Name of the Uffizzi cluster which is going to get created'
     required: false
+  image:
+    description: 'Uffizzi CLI image details'
+    required: false
 
 runs:
   using: 'composite'
@@ -32,7 +35,7 @@ runs:
       UFFIZZI_USER: ${{ inputs.username }}
       UFFIZZI_PROJECT: ${{ inputs.project }}
       UFFIZZI_CLUSTER: ${{ inputs.cluster-name }}
-      UFFIZZI_IMAGE: uffizzi/cli:pr-224
+      UFFIZZI_IMAGE: ${{ inputs.image }} 
     run: |
       # Identify if a Cluster for this PR exists.
       if docker run --rm \
