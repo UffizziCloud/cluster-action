@@ -42,4 +42,7 @@ runs:
       UFFIZZI_CLUSTER: ${{ inputs.cluster-name }}
       UFFIZZI_IMAGE: ${{ inputs.image }} 
       UFFIZZI_OP: ${{ inputs.operation }}
-    run: .github/workflows/script.sh $UFFIZZI_OP
+    run: |
+      ls
+      pwd
+      #.github/workflows/script.sh $UFFIZZI_OP
