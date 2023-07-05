@@ -25,6 +25,10 @@ inputs:
     description: 'Uffizzi CLI image'
     default: docker.io/uffizzi/cli:pr-239
     required: true
+  operation:
+    description: 'Specification for the operation on the cluster. Whether it needs to be created, deleted or updated.'
+    default: 'create'
+    required: true
 
 runs:
   using: 'composite'
@@ -37,30 +41,5 @@ runs:
       UFFIZZI_PROJECT: ${{ inputs.project }}
       UFFIZZI_CLUSTER: ${{ inputs.cluster-name }}
       UFFIZZI_IMAGE: ${{ inputs.image }} 
-    run: |
-      # Identify if a Cluster for this PR exists.
-      if docker run --rm \
-        --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
-        --env UFFIZZI_USER=${UFFIZZI_USER} \
-        --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
-        --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
-        ${UFFIZZI_IMAGE} cluster list | grep --quiet ${UFFIZZI_CLUSTER}
-      then
-        # If it already exists, fetch the `kubeconfig` to connect to it.
-        docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
-          --env UFFIZZI_USER=${UFFIZZI_USER} \
-          --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
-          --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
-          --mount type=bind,source="$(pwd)",target=/home \
-          ${UFFIZZI_IMAGE} cluster update-kubeconfig \
-          --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
-      else
-        # Create the Cluster if it does not yet exist.
-        docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
-          --env UFFIZZI_USER=${UFFIZZI_USER} \
-          --env UFFIZZI_PASSWORD=${UFFIZZI_PASSWORD} \
-          --env UFFIZZI_PROJECT=${UFFIZZI_PROJECT} \
-          --mount type=bind,source="$(pwd)",target=/home \
-        ${UFFIZZI_IMAGE} cluster create \
-          --name ${UFFIZZI_CLUSTER} --kubeconfig /home/kubeconfig
-      fi
+      UFFIZZI_OP: ${{ inputs.operation }}
+    run: .github/workflows/script.sh $UFFIZZI_OP
