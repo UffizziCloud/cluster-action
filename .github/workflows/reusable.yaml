@@ -167,16 +167,6 @@ jobs:
       #   run: |
       #     REPO=$(echo ${{ github.repository }} | sed 's/\./+/g')
       #     echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
-      - name: Obtain an a job token and an OIDC token request url from GHA
-        uses: actions/github-script@v6
-        id: ci-job-token
-        with:
-          debug: true
-          script: |
-            const token = process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN']
-            const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL']
-            core.setOutput('request-token', token.trim())
-            core.setOutput('request-token-url', runtimeUrl.trim())
 
       # Look for an existing Cluster Deployment.
       - name: Find Cluster for this Pull Request
@@ -188,8 +178,8 @@ jobs:
         run: |
           if docker run --rm \
             --env UFFIZZI_SERVER="${{ inputs.server }}" \
-            --env REQUEST_TOKEN=$REQUEST_TOKEN \
-            --env REQUEST_TOKEN_URL=$REQUEST_TOKEN_URL \
+            --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+            --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
             "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
           then
             echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
@@ -202,8 +192,6 @@ jobs:
           UFFIZZI_SERVER: ${{ inputs.server }}
           UFFIZZI_USER: ${{ inputs.username }}
           UFFIZZI_PROJECT: ${{ inputs.project }}
-          REQUEST_TOKEN: ${{ steps.ci-job-token.outputs.request-token }}
-          REQUEST_TOKEN_URL: ${{ steps.ci-job-token.outputs.request-token-url }}
           ACCESS_TOKEN: ${{ secrets.access-token }}
           LOGGER_KEY: ${{ env.LOGGER_KEY }}
           CI_WORKFLOW: "true"
