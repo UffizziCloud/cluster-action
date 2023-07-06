@@ -434,7 +434,7 @@ jobs:
 
       - name: Delete Cluster from Uffizzi
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
-        uses: UffizziCloud/cluster-action@v2
+        uses: UffizziCloud/cluster-action@reusable
         with:
           id: ${{ env.DEPLOYMENT_ID }}
           username: ${{ inputs.username }}
