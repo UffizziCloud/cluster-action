@@ -78,11 +78,13 @@ runs:
         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
         "${{ inputs.image }}" cluster list | grep --quiet '^- ${{ inputs.cluster-name }}$'
       then
-        # If it already exists, fetch the `kubeconfig` to connect to it.
+        # delete the cluster if it exists
         docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
           --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
           --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
           --mount type=bind,source="$(pwd)",target=/home \
           "${{ inputs.image }}" cluster delete \
           --name "${{ inputs.cluster-name }}"
+      else
+        echo "Given cluster ${{ inputs.cluster-name }} does not exist"
       fi
