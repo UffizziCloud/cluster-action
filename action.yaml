@@ -20,41 +20,59 @@ inputs:
     description: 'Path to kubeconfig file.'
     default: ${{ github.workspace }}/kubeconfig
     required: false
+  delete:
+    description: 'Delete the ucluster'
+    default: "false"
+    required: false
+  project:
+    description: 'Uffizzi project'
+    default: "default"
+    required: false
 
 runs:
   using: 'composite'
   steps:
   - shell: bash
     run: |
-      # Identify if a Cluster for this PR exists.
-      if docker run --rm \
-        --env UFFIZZI_SERVER="${{ inputs.server }}" \
+      # Check if delete option is set
+      if ${{ inputs.delete }}
+      then
+        docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
         --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-        "${{ inputs.image }}" cluster list | grep --quiet '^- ${{ inputs.cluster-name }}$'
-      then
-        # If it already exists, fetch the `kubeconfig` to connect to it.
-        docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
-          --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-          --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-          --mount type=bind,source="$(pwd)",target=/home \
-          "${{ inputs.image }}" cluster update-kubeconfig \
-          --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+        "${{ inputs.image }}" cluster delete \
+        --name "${{ inputs.cluster-name }}"
       else
-        # Create the Cluster if it does not yet exist.
-        docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
-          --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-          --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-          --mount type=bind,source="$(pwd)",target=/home \
-        "${{ inputs.image }}" cluster create \
-          --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
-        echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
-        export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
-        echo "Available at \`${KUBERNETES_SERVICE_HOST}\`." | tee --append $GITHUB_STEP_SUMMARY
-        echo "You can access this cluster with a command like \`uffizzi cluster update-kubeconfig --name=${UFFIZZI_CLUSTER} --kubeconfig=/tmp/kubeconfig\`" | tee --append $GITHUB_STEP_SUMMARY
-        echo "and then \`kubectl --kubeconfig /tmp/kubeconfig\` or similar." | tee --append $GITHUB_STEP_SUMMARY
-        sleep 3
+          # Identify if a Cluster for this PR exists.
+          if docker run --rm \
+            --env UFFIZZI_SERVER="${{ inputs.server }}" \
+            --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+            --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+            "${{ inputs.image }}" cluster list | grep --quiet '^- ${{ inputs.cluster-name }}$'
+          then
+            # If it already exists, fetch the `kubeconfig` to connect to it.
+            docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
+              --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+              --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+              --mount type=bind,source="$(pwd)",target=/home \
+              "${{ inputs.image }}" cluster update-kubeconfig \
+              --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+          else
+            # Create the Cluster if it does not yet exist.
+            docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
+              --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+              --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+              --mount type=bind,source="$(pwd)",target=/home \
+            "${{ inputs.image }}" cluster create \
+              --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+            echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
+            export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
+            echo "Available at \`${KUBERNETES_SERVICE_HOST}\`." | tee --append $GITHUB_STEP_SUMMARY
+            echo "You can access this cluster with a command like \`uffizzi cluster update-kubeconfig --name=${UFFIZZI_CLUSTER} --kubeconfig=/tmp/kubeconfig\`" | tee --append $GITHUB_STEP_SUMMARY
+            echo "and then \`kubectl --kubeconfig /tmp/kubeconfig\` or similar." | tee --append $GITHUB_STEP_SUMMARY
+            sleep 3
+        fi
       fi
 
-      mv --no-clobber ./kubeconfig "${{ inputs.kubeconfig }}"
-      echo "kubeconfig file at ${{ inputs.kubeconfig }}"
+      # mv --no-clobber ./kubeconfig "${{ inputs.kubeconfig }}"
+      # echo "kubeconfig file at ${{ inputs.kubeconfig }}"
