@@ -192,7 +192,8 @@ jobs:
             --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
             "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
           then
-            echo DEPLOYMENT_ID=pr-$PR_NUMBER
+            echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
+          fi
         env:
           UFFIZZI_PASSWORD: ${{ secrets.password }}
           UFFIZZI_SERVER: ${{ inputs.server }}
