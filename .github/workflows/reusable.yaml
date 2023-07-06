@@ -8,11 +8,11 @@ on:
     inputs:
       k8s-manifest-cache-key:
         description: "GHA Cache Key for Kubernetes manifests file ready to deploy"
-        required: true
+        required: false # TODO: true
         type: string
       k8s-manifest-cache-path:
         description: "GHA Cache Path for Kubernetes manifests file ready to deploy"
-        required: true
+        required: false # TODO: true
         type: string
       username:
         description: "Uffizzi username for login, usually an email address"
