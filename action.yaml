@@ -20,6 +20,10 @@ inputs:
     description: 'Path to kubeconfig file.'
     default: ${{ github.workspace }}/kubeconfig
     required: false
+  k8s-manifest-file:
+    description: 'Path to the k8s manifest file that needs to be applied'
+    default: ''
+    required: false
 
 runs:
   using: 'composite'
