@@ -7,61 +7,51 @@ branding:
 inputs:
   server:
     description: 'URL to Uffizzi'
-    required: true
+    required: false
     default: 'https://app.uffizzi.com'
-  # username:
-  #   description: 'Uffizzi username'
-  #   required: false
-  # password:
-  #   description: 'Uffizzi password'
-  #   required: false
-  # project:
-  #   description: 'Uffizzi project slug'
-  #   required: false
   cluster-name:
     description: 'Name of the Uffizzi cluster which is going to get created'
-    required: false
+    required: true
   image:
     description: 'Uffizzi CLI image'
-    default: docker.io/uffizzi/cli:pr-239
-    required: true
+    default: docker.io/uffizzi/cli:v2
+    required: false
+  kubeconfig:
+    description: 'Path to kubeconfig file.'
+    default: ${{ github.workspace }}/kubeconfig
+    required: false
 
 runs:
   using: 'composite'
   steps:
   - shell: bash
-    env:
-      # UFFIZZI_PASSWORD: ${{ inputs.password }}
-      UFFIZZI_SERVER: ${{ inputs.server }}
-      # UFFIZZI_USER: ${{ inputs.username }}
-      # UFFIZZI_PROJECT: ${{ inputs.project }}
-      UFFIZZI_CLUSTER: ${{ inputs.cluster-name }}
-      UFFIZZI_IMAGE: ${{ inputs.image }} 
     run: |
       # Identify if a Cluster for this PR exists.
       if docker run --rm \
-        --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+        --env UFFIZZI_SERVER="${{ inputs.server }}" \
         --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-        ${UFFIZZI_IMAGE} cluster list | grep --quiet ${UFFIZZI_CLUSTER}
+        "${{ inputs.image }}" cluster list | grep --quiet '^- ${{ inputs.cluster-name }}$'
       then
         # If it already exists, fetch the `kubeconfig` to connect to it.
-        docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+        docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
           --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
           --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-          --mount type=bind,source="$(pwd)",target=/home \
-        ${UFFIZZI_IMAGE} cluster update-kubeconfig \
-          --name=${UFFIZZI_CLUSTER} --kubeconfig="/home/kubeconfig"
+          --mount type=bind,source="$(pwd)",target=/root \
+          "${{ inputs.image }}" cluster update-kubeconfig \
+          --name "${{ inputs.cluster-name }}" --kubeconfig /root/kubeconfig
       else
         # Create the Cluster if it does not yet exist.
-        docker run --rm --env UFFIZZI_SERVER=${UFFIZZI_SERVER} \
+        docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
           --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
           --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-          --mount type=bind,source="$(pwd)",target=/home \
-        ${UFFIZZI_IMAGE} cluster create \
-          --name=${UFFIZZI_CLUSTER} --kubeconfig="/home/kubeconfig"
-        echo "Uffizzi Cluster \`${UFFIZZI_CLUSTER}\` created." >> $GITHUB_STEP_SUMMARY
+          --mount type=bind,source="$(pwd)",target=/root \
+        "${{ inputs.image }}" cluster create \
+          --name "${{ inputs.cluster-name }}" --kubeconfig /root/kubeconfig
+        echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
         export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
-        echo "Available at \`${KUBERNETES_SERVICE_HOST}\`." >> $GITHUB_STEP_SUMMARY
-        echo "Waiting for $KUBERNETES_SERVICE_HOST"
+        echo "Available at \`${KUBERNETES_SERVICE_HOST}\`." | tee --append $GITHUB_STEP_SUMMARY
       fi
+
+      mv ./kubeconfig "${{ inputs.kubeconfig }}"
+      echo "kubeconfig file at ${{ inputs.kubeconfig }}"
