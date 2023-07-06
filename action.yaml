@@ -41,7 +41,7 @@ runs:
         --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
         "${{ inputs.image }}" cluster delete \
-        --name "${{ inputs.cluster-name }}"
+        "${{ inputs.cluster-name }}"
       else
           # Identify if a Cluster for this PR exists.
           if docker run --rm \
