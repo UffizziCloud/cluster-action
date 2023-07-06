@@ -188,11 +188,14 @@ jobs:
         run: |
           if docker run --rm \
             --env UFFIZZI_SERVER="${{ inputs.server }}" \
-            --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-            --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+            --env REQUEST_TOKEN=${REQUEST_TOKEN} \
+            --env REQUEST_TOKEN_URL=${REQUEST_TOKEN_URL} \
             "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
           then
             echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
+          else
+            echo DEPLOYMENT_ID='' >> $GITHUB_ENV
+            echo "Uffizzi cluster with name pr-$PR_NUMBER not found"
           fi
         env:
           UFFIZZI_PASSWORD: ${{ secrets.password }}
@@ -229,21 +232,6 @@ jobs:
 
             if (core.isDebug()) {
               console.log(pr);
-            }
-
-            // Retain legacy behavior if we're passed this input empty.
-            if (core.getInput('k8s-manifest-cache-key') == '') {
-              if (DEPLOYMENT_ID == '') {
-                core.warning(`No compose file passed and no deployment found. No operation.`);
-                action = 'none';
-              } else {
-                console.log(`No compose file passed and ${DEPLOYMENT_ID} found. Deleting existing deployment.`);
-                action = 'delete';
-              }
-
-              core.exportVariable('UFFIZZI_ACTION', action);
-              // core.setOutput('action', action);
-              return;
             }
 
             // `state` is either `open` or `closed`.
@@ -323,16 +311,7 @@ jobs:
           request-token-url: ${{ steps.ci-job-token.outputs.request-token-url }}
           dockerhub-username: ${{ secrets.dockerhub-username }}
           dockerhub-password: ${{ secrets.dockerhub-password }}
-          acr-username: ${{ secrets.acr-username }}
-          acr-password: ${{ secrets.acr-password }}
-          acr-registry-url: ${{ secrets.acr-registry-url }}
-          aws-access-key-id: ${{ secrets.aws-access-key-id }}
-          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
-          aws-registry-url: ${{ secrets.aws-registry-url }}
-          gcloud-service-key: ${{ secrets.gcloud-service-key }}
-          docker-registry-username: ${{ secrets.docker-registry-username }}
-          docker-registry-password: ${{ secrets.docker-registry-password }}
-          docker-registry-url: ${{ secrets.docker-registry-url }}
+          
           logger-key: ${{ env.LOGGER_KEY }}
 
       - name: Job output consolidation
