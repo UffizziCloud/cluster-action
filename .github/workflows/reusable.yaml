@@ -53,6 +53,11 @@ on:
         default: "uffizzi"
         required: false
         type: string
+      image: 
+        description: "Uffizzi CLI image"
+        default: "uffizzi/cli:v2"
+        required: false
+        type: string
     secrets:
       access-token:
         description: "Github pipeline token"
@@ -176,10 +181,18 @@ jobs:
       # Look for an existing Cluster Deployment.
       - name: Find Cluster for this Pull Request
         id: find-deployment
-        uses: docker://uffizzi/cli:v2
-        with:
-          entrypoint: bash
-          args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
+        # uses: docker://uffizzi/cli:v2
+        # with:
+        #   entrypoint: bash
+        #   args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
+        run: |
+          if docker run --rm \
+            --env UFFIZZI_SERVER="${{ inputs.server }}" \
+            --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+            --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+            "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
+          then
+            echo DEPLOYMENT_ID=pr-$PR_NUMBER
         env:
           UFFIZZI_PASSWORD: ${{ secrets.password }}
           UFFIZZI_SERVER: ${{ inputs.server }}
@@ -288,11 +301,12 @@ jobs:
             ${{ inputs.description }}
           edit-mode: replace
 
-      - name: Deploy New Cluster
+      - name: Deploy or Update Cluster
         id: create-cluster
-        if: ${{ env.UFFIZZI_ACTION == 'create' }}
+        if: ${{ env.UFFIZZI_ACTION == 'create' }} || ${{ env.UFFIZZI_ACTION == 'update' }}
         uses: UffizziCloud/cluster-action@reusable
         with:
+          action: create
           k8s-manifest-file: ${{ inputs.k8s-manifest-cache-path }}
           username: ${{ inputs.username }}
           server: ${{ inputs.server }}
@@ -436,6 +450,7 @@ jobs:
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
         uses: UffizziCloud/cluster-action@reusable
         with:
+          action: delete
           id: ${{ env.DEPLOYMENT_ID }}
           username: ${{ inputs.username }}
           server: ${{ inputs.server }}
