@@ -85,3 +85,4 @@ runs:
           --mount type=bind,source="$(pwd)",target=/home \
           "${{ inputs.image }}" cluster delete \
           --name "${{ inputs.cluster-name }}"
+      fi
