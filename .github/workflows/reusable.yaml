@@ -1,164 +1,618 @@
----
-name: Uffizzi Cluster
+name: Reusable Uffizzi Cluster Environment Workflow
 
-on:  
-  # REUSABLE WORKFLOW with INPUTS
-  # to keep this workflow simple, assumptions are made:
-    # - Checks out a repo with a kustomization.yaml file
-    # - Changes a image tag in the kustomization.yaml file
-    # - Deploys to a Uffizzi Cluster
-    # - Optionally notifies a Slack channel
+env:
+  LOGGER_KEY: "aHR0cHM6Ly80NGI3Zjk5MTFiODU0NWI5YTMzMDY4NzRhY2ZjYjJjOUBvMzI0MzExLmluZ2VzdC5zZW50cnkuaW8vNDUwNDM2MTIxMjI0ODA2NA=="
 
+on:
   workflow_call:
-    # allow reuse of this workflow in other repos
     inputs:
-      repo:
-        description: Kustomize repo to checkout
+      k8s-manifest-cache-key:
+        description: "GHA Cache Key for Kubernetes manifests file ready to deploy"
         required: true
         type: string
-        # default: org/repo
-      image:
-        description: Image name to update in Kustomize
+      k8s-manifest-cache-path:
+        description: "GHA Cache Path for Kubernetes manifests file ready to deploy"
         required: true
         type: string
-        # default: ghcr.io/org/repo
-      tag:
-        description: New tag to use for the image
-        required: true
-        type: string
-      environments-root-dir:
-        description: Root directory where all environment directories are located
+      username:
+        description: "Uffizzi username for login, usually an email address"
         required: false
         type: string
-        default: environments
-      environment-dir:
-        description: Path to the kustomization.yaml file
-        required: true
-        type: string
-        # default: staging01
-      slack-channel-id:
-        description: Slack channel ID to post to
+      server:
+        description: "Uffizzi server URL"
+        default: https://app.uffizzi.com
         required: false
         type: string
-        # default: C0123456789
+      project:
+        description: "Uffizzi project name"
+        default: default
+        required: false
+        type: string
       pr-number:
-        description: Pull Request Number (or other unique ID)
-        required: true
-        type: string
-      operation:
-        description: 'Specification for the operation on the cluster. Whether it needs to be created, deleted or updated.'
-        default: 'create'
-        required: true
-
-    secrets:
-      slack-token:
-        description: Docker Hub username
+        description: "GitHub Pull Request Number"
+        default: ""
         required: false
-      github-token:
-        description: Docker Hub token with write access to the repo and PRs
-        required: true
-      uffizzi-password:
-        description: Uffizzi account password
-        required: true
+        type: string
+      git-ref:
+        description: "Branch or other git reference to checkout"
+        default: ""
+        required: false
+        type: string
+      healthcheck-url-path:
+        description: "URL Path to the Uffizzi Cluster URL where healthcheck would be performed. The URL Path has to start with a '/'."
+        default: ""
+        required: false
+        type: string
+      description:
+        description: "Text string added to comment on pull request issue"
+        default: "What is Uffizzi? [Learn more](https://www.uffizzi.com)!"
+        required: false
+        type: string
+      environment:
+        description: "Custom environment for the deployed cluster"
+        default: "uffizzi"
+        required: false
+        type: string
+    secrets:
+      access-token:
+        description: "Github pipeline token"
+        required: false
+      password:
+        description: "Uffizzi password for login"
+        required: false
+      url-username:
+        description: "Username for authenticating to each Environment"
+        required: false
+      url-password:
+        description: "Password for authentication to each Environment"
+        required: false
+      personal-access-token:
+        description: "GitHub personal access token with access to container registry"
+        required: false
+      dockerhub-username:
+        description: "DockerHub username"
+        required: false
+      dockerhub-password:
+        description: "DockerHub password"
+        required: false
+      acr-username:
+        description: "Azure username"
+        required: false
+      acr-password:
+        description: "Azure password"
+        required: false
+      acr-registry-url:
+        description: "Azure registry url"
+        required: false
+      aws-access-key-id:
+        description: "Amazon Web Services access key id"
+        required: false
+      aws-secret-access-key:
+        description: "Amazon Web Services secret access key"
+        required: false
+      aws-registry-url:
+        description: "Amazon Web Services registry url"
+        required: false
+      gcloud-service-key:
+        description: "Google Cloud service key"
+        required: false
+      docker-registry-username:
+        description: "Custom docker registry username"
+        required: false
+      docker-registry-password:
+        description: "Custom docker registry password"
+        required: false
+      docker-registry-url:
+        description: "Custom docker registry url"
+        required: false
 
-#    outputs:
-#      pr-url:
-#        description: "The newly created GitHub Pull Request URL"
-#        value: ${{ jobs.gitops-pr.outputs.pr-url }}
+    outputs:
+      url:
+        description: "URL to Uffizzi Cluster Environment"
+        value: ${{ jobs.uffizzi-cluster.outputs.url }}
+      id:
+        description: "Uffizzi Cluster Deployment ID"
+        value: ${{ jobs.uffizzi-cluster.outputs.id }}
+      containers_uri:
+        description: "URL to Uffizzi Deployment Details"
+        value: ${{ jobs.uffizzi-cluster.outputs.containers_uri }}
+      expiration_interval:
+        description: "Uffizzi Cluster Expiration Interval in Seconds"
+        value: ${{ jobs.uffizzi-cluster.outputs.expiration_interval }}
+      expiration:
+        description: "Uffizzi Cluster Expiration Time String"
+        value: ${{ jobs.uffizzi-cluster.outputs.expiration }}
+      expiration_timestamp:
+        description: "Uffizzi Cluster Expiration UNIX Timestamp"
+        value: ${{ jobs.uffizzi-cluster.outputs.expiration_timestamp }}
 
-# permissions: GITHUB_TOKEN are better set by the **calling** workflow
-# but we'll set defaults here for reference
-# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idpermissions
-# Need `id-token: write` for OIDC: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#adding-permissions-settings
 permissions:
+  contents: read
+  pull-requests: write
   id-token: write
 
 jobs:
-  uffizzi:
-    name: Uffizzi
-    runs-on: ubuntu-latest
-
-#    outputs:
-#      pr-url: ${{ steps.cpr.outputs.pull-request-url }}
-
+  uffizzi-cluster:
+    name: "Create, Update, or Delete cluster on Uffizzi"
+    runs-on: ubuntu-22.04
+    environment:
+      name: ${{ inputs.environment }}
+      url: "${{ steps.outputs.outputs.url }}"
+    outputs:
+      url: ${{ steps.outputs.outputs.url }}
+      id: ${{ steps.outputs.outputs.id }}
+      containers_uri: ${{ steps.outputs.outputs.containers_uri }}
+      expiration_interval: ${{ steps.outputs.outputs.expiration_interval }}
+      expiration: ${{ steps.outputs.outputs.expiration }}
+      expiration_timestamp: ${{ steps.outputs.outputs.expiration_timestamp }}
     steps:
-      - name: Checkout ${{ inputs.repo }}
+      - name: DEBUG - Dump GitHub context and environment info
+        if: ${{ runner.debug }}
+        uses: crazy-max/ghaction-dump-context@v1
+      - name: Determine Pull Request Number
+        id: pr
+        run: |
+          export INPUT_PR=${{ inputs.pr-number }}
+          export CONTEXT_PR=${{ github.event.number }}
+          export OUTPUT_PR=${INPUT_PR:-$CONTEXT_PR}
+          echo "PR_NUMBER=$OUTPUT_PR" >> $GITHUB_ENV
+      - name: Predict Deployment URL
+        id: url
+        # Replace dots in the repo name with the plus sign
+        run: |
+          REPO=$(echo ${{ github.repository }} | sed 's/\./+/g')
+          echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
+      - name: Obtain an a job token and an OIDC token request url from GHA
+        uses: actions/github-script@v6
+        id: ci-job-token
+        with:
+          debug: true
+          script: |
+            const token = process.env['ACTIONS_ID_TOKEN_REQUEST_TOKEN']
+            const runtimeUrl = process.env['ACTIONS_ID_TOKEN_REQUEST_URL']
+            core.setOutput('request-token', token.trim())
+            core.setOutput('request-token-url', runtimeUrl.trim())
+
+      # Look for an existing Cluster Deployment.
+      - name: Find Deployment for this Pull Request
+        id: find-deployment
+        uses: docker://uffizzi/cli:v2
+        with:
+          entrypoint: bash
+          args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
+        env:
+          UFFIZZI_PASSWORD: ${{ secrets.password }}
+          UFFIZZI_SERVER: ${{ inputs.server }}
+          UFFIZZI_USER: ${{ inputs.username }}
+          UFFIZZI_PROJECT: ${{ inputs.project }}
+          REQUEST_TOKEN: ${{ steps.ci-job-token.outputs.request-token }}
+          REQUEST_TOKEN_URL: ${{ steps.ci-job-token.outputs.request-token-url }}
+          ACCESS_TOKEN: ${{ secrets.access-token }}
+          LOGGER_KEY: ${{ env.LOGGER_KEY }}
+          CI_WORKFLOW: "true"
+      - name: Find comment for deployment URL
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ env.PR_NUMBER }}
+          comment-author: "github-actions[bot]"
+          body-includes: "${{ env.EXPECTED_URL }}"
+          direction: last
+
+      - name: Determine Operation
+        uses: actions/github-script@v6
+        with:
+          k8s-manifest-cache-key: ${{ inputs.k8s-manifest-cache-key }}
+          script: |
+            let action = 'none'; // default
+            const { PR_NUMBER, DEPLOYMENT_ID } = process.env;
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: PR_NUMBER
+            });
+
+            if (core.isDebug()) {
+              console.log(pr);
+            }
+
+            // Retain legacy behavior if we're passed this input empty.
+            if (core.getInput('k8s-manifest-cache-key') == '') {
+              if (DEPLOYMENT_ID == '') {
+                core.warning(`No compose file passed and no deployment found. No operation.`);
+                action = 'none';
+              } else {
+                console.log(`No compose file passed and ${DEPLOYMENT_ID} found. Deleting existing deployment.`);
+                action = 'delete';
+              }
+
+              core.exportVariable('UFFIZZI_ACTION', action);
+              // core.setOutput('action', action);
+              return;
+            }
+
+            // `state` is either `open` or `closed`.
+            if (pr.data.state == 'open') {
+              if (DEPLOYMENT_ID == '') {
+                console.log(`PR ${PR_NUMBER} is open but no deployment found. Creating new deployment.`);
+                action = 'create';
+              } else {
+                console.log(`PR ${PR_NUMBER} is open and ${DEPLOYMENT_ID} found. Updating existing deployment.`);
+                action = 'update';
+              }
+            } else if (pr.data.state == 'closed') {
+              if (DEPLOYMENT_ID == '') {
+                core.warning(`PR ${PR_NUMBER} is closed but no deployment found. No operation.`);
+                action = 'none';
+              } else {
+                console.log(`PR ${PR_NUMBER} is closed and ${DEPLOYMENT_ID} found. Deleting existing deployment.`);
+                action = 'delete';
+              }
+            } else {
+              core.setFailed(`Fatal exception: PR ${PR_NUMBER} is neither \`open\` nor \`closed\` but \`${pr.data.state}\`.`);
+            }
+
+            core.exportVariable('UFFIZZI_ACTION', action);
+            // core.setOutput('action', action);
+            return;
+
+      - name: Checkout commit
+        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
         uses: actions/checkout@v3
         with:
-          repository: ${{ inputs.repo }}
-          token: ${{ secrets.github-token }}
-          ref: uffizzi
+          ref: ${{ inputs.git-ref || github.event.pull_request.head.sha }}
 
-      # - name: Change image tag in kustomization.yaml
-      #   run: |
-      #     cd ${{ inputs.environments-root-dir }}/${{ inputs.environment-dir }}
-      #     kustomize edit set image "$(echo '${{ inputs.image }}' | tr '[:upper:]' '[:lower:]'):${{ inputs.tag }}"
-      #     cat kustomization.yaml
+      - name: Fetch cached Compose File
+        id: cache
+        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
+        uses: actions/cache@v3
+        with:
+          path: ${{ inputs.k8s-manifest-cache-path }}
+          key: ${{ inputs.k8s-manifest-cache-key }}
 
-      - name: Create Uffizzi Cluster
-        env:
-          UFFIZZI_SERVER: https://pr-1100-deployment-29999-uffizzi-platform.app.uffizzi.com/
-          UFFIZZI_USER: admin@uffizzi.com
-          UFFIZZI_PASSWORD: ${{ secrets.uffizzi-password }}
-          UFFIZZI_PROJECT: default
-          UFFIZZI_IMAGE: uffizzi/cli:pr-239
-          UFFIZZI_CLUSTER: pr-${{ inputs.pr-number }}
-          UFFIZZI_OP: ${{inputs.operation}}
+      - name: Create or Update Comment with Deployment Notification
+        id: notification
+        uses: peter-evans/create-or-update-comment@v2
+        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ env.PR_NUMBER }}
+          body: |
+            ## Uffizzi Ephemeral Environment Deploying
+
+            :cloud: ${{ env.EXPECTED_URL }}
+
+            :gear: Updating now by workflow run [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+            ${{ inputs.description }}
+          edit-mode: replace
+
+      - name: Deploy New Cluster
+        id: create-cluster
+        if: ${{ env.UFFIZZI_ACTION == 'create' }}
+        uses: UffizziCloud/cluster-action@v3
+        with:
+          compose-file: ${{ inputs.k8s-manifest-cache-path }}
+          username: ${{ inputs.username }}
+          server: ${{ inputs.server }}
+          project: ${{ inputs.project }}
+          password: ${{ secrets.password }}
+          access-token: ${{ secrets.access-token }}
+          ghcr-username: ${{ github.actor }}
+          ghcr-access-token: ${{ secrets.personal-access-token }}
+          github-event-number: ${{ env.PR_NUMBER }}
+          github-ref: ${{ github.ref }}
+          github-repository: ${{ github.repository }}
+          request-token: ${{ steps.ci-job-token.outputs.request-token }}
+          request-token-url: ${{ steps.ci-job-token.outputs.request-token-url }}
+          dockerhub-username: ${{ secrets.dockerhub-username }}
+          dockerhub-password: ${{ secrets.dockerhub-password }}
+          acr-username: ${{ secrets.acr-username }}
+          acr-password: ${{ secrets.acr-password }}
+          acr-registry-url: ${{ secrets.acr-registry-url }}
+          aws-access-key-id: ${{ secrets.aws-access-key-id }}
+          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+          aws-registry-url: ${{ secrets.aws-registry-url }}
+          gcloud-service-key: ${{ secrets.gcloud-service-key }}
+          docker-registry-username: ${{ secrets.docker-registry-username }}
+          docker-registry-password: ${{ secrets.docker-registry-password }}
+          docker-registry-url: ${{ secrets.docker-registry-url }}
+          logger-key: ${{ env.LOGGER_KEY }}
+
+      - name: Job output consolidation
+        id: outputs
+        if: ${{ contains(fromJSON('["create"]'), env.UFFIZZI_ACTION) }}
         run: |
-          #!/bin/bash
-          # Checking if the script received any argument
-          if [ $# -eq 0 ]; then
-              echo "No arguments provided"
-              echo "[create|delete]"
-              exit 1
-          fi
+          export CREATE_URL=${{ steps.create-cluster.outputs.url }}
+          export CREATE_ID=${{ steps.create-cluster.outputs.id }}
+          export CREATE_CONTAINERS=${{ steps.create-cluster.outputs.containers_uri }}
 
-          # Retrieve the operation from the script argument
-          operation=$1
+          export OUTPUT_URL=${CREATE_URL:-$UPDATE_URL}
+          export OUTPUT_ID=${CREATE_ID:-$UPDATE_ID}
+          export OUTPUT_CONTAINERS=${CREATE_CONTAINERS:-$UPDATE_CONTAINERS}
 
-          # Handling the operation
-          if [ "$operation" = "create" ]; then
-              echo "Checking if uffizzi cluster ${UFFIZZI_CLUSTER} already exists"    
-              if docker run --rm \
-                  --env UFFIZZI_SERVER \
-                  --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-                  --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-                  ${UFFIZZI_IMAGE} cluster list | grep --quiet ${UFFIZZI_CLUSTER}
-              # If it already exists, fetch the `kubeconfig` to connect to it.
-              then
-                  echo "Cluster already existsUpdating kubeconfig to point to ${UFFIZZI_CLUSTER}"
-                  docker run --rm --env UFFIZZI_SERVER \
-                      --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-                      --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-                      --mount type=bind,source="$(pwd)",target=/home \
-                  ${UFFIZZI_IMAGE} cluster update-kubeconfig \
-                      --name=${UFFIZZI_CLUSTER} --kubeconfig="/home/kubeconfig"
-              else 
-                  echo "Creating ..."
-                  docker run --rm --env UFFIZZI_SERVER \
-                      --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-                      --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-                      --mount type=bind,source="$(pwd)",target=/home \
-                  ${UFFIZZI_IMAGE} cluster create \
-                      --name=${UFFIZZI_CLUSTER} --kubeconfig="/home/kubeconfig"
-              fi
-          elif [ "$operation" = "delete" ]; then
-              # Insert delete logic here
-              echo "Deleting..."
-          else
-              # Default case if none of the above cases match
-              echo "Invalid operation. Please provide either 'create' or 'delete'"
-              exit 1
-          fi
+          echo "Deployment ID $OUTPUT_ID at $OUTPUT_URL"
 
-          exit 0
+          echo "OUTPUT_ID=$OUTPUT_ID" >> $GITHUB_ENV
+          echo "DEPLOYMENT_ID=$OUTPUT_ID" >> $GITHUB_ENV
+          echo "OUTPUT_URL=$OUTPUT_URL" >> $GITHUB_ENV
+          echo "OUTPUT_CONTAINERS=$OUTPUT_CONTAINERS" >> $GITHUB_ENV
 
-      # - name: Post to a Slack channel
-      #   id: slack
-      #   if: ${{ inputs.slack-channel-id }}
-      #   uses: slackapi/slack-github-action@v1
+          # export EXPIRATION_HOURS=$(grep --perl-regexp --only-matching '^[ \t]*(?!#)delete_cluster_after: \K\d+' ${{ inputs.k8s-manifest-cache-path }})
+          # if [ -z "$EXPIRATION_HOURS" ]
+          # then
+          #   echo "No cluster expiration parameter found."
+          # else
+          #   export EXPIRATION_INTERVAL=$(( $EXPIRATION_HOURS * 3600 ))
+          #   export EXPIRATION_TIMESTAMP=$(date +'%s')
+          #   export EXPIRATION=$(date --utc --date=@$(($EXPIRATION_TIMESTAMP + $EXPIRATION_INTERVAL)))
+
+          #   echo "Expiring in $EXPIRATION_INTERVAL seconds at $EXPIRATION."
+
+          #   echo "EXPIRATION_INTERVAL=$EXPIRATION_INTERVAL" >> $GITHUB_ENV
+          #   echo "EXPIRATION=:alarm_clock: This cluster will be destroyed in $EXPIRATION_HOURS hours at: $EXPIRATION" >> $GITHUB_ENV
+          # fi
+
+          # Expose the step output variables
+          echo "url=$OUTPUT_URL" >> $GITHUB_OUTPUT
+          echo "id=$OUTPUT_ID" >> $GITHUB_OUTPUT
+          echo "containers_uri=$OUTPUT_CONTAINERS" >> $GITHUB_OUTPUT
+          echo "expiration_interval=$EXPIRATION_INTERVAL" >> $GITHUB_OUTPUT
+          echo "expiration=$EXPIRATION" >> $GITHUB_OUTPUT
+          echo "expiration_timestamp=$EXPIRATION_TIMESTAMP" >> $GITHUB_OUTPUT
+
+      - name: Check if URL Authentication is in use
+        # GHA limitation workaround https://github.com/actions/runner/issues/520#issuecomment-700579336
+        id: url-auth-for-create
+        shell: bash
+        run: if [ -z "${{ secrets.url-password }}" ]; then echo "No URL authentication."; else echo "URL_AUTHENTICATION=true" >> $GITHUB_ENV ; fi
+      - name: Confirm Successful Cluster Deployment
+        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == '' }}
+        uses: docker://curlimages/curl:7.87.0
+        with:
+          args: --retry 12 --retry-all-errors --retry-delay 0 --fail --location ${{ env.OUTPUT_URL }}${{ inputs.healthcheck-url-path }}
+      # - name: Confirm Successful Cluster Deployment with Authentication
+      #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == 'true' }}
+      #   uses: docker://curlimages/curl:7.87.0
       #   with:
-      #     channel-id: ${{ inputs.slack-channel-id }}
-      #     slack-message: "PR deployed `pr-${{ inputs.pr-number }}`"
-      #   env:
-      #     SLACK_BOT_TOKEN: ${{ secrets.slack-token }}
+      #     args: --basic --user ${{ secrets.url-username }}:${{ secrets.url-password }} --retry 12 --retry-all-errors --retry-delay 0 --fail --location ${{ env.OUTPUT_URL }}${{ inputs.healthcheck-url-path }}
+
+      - name: Create or Update Comment with Deployment URL
+        uses: peter-evans/create-or-update-comment@v2
+        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
+        with:
+          comment-id: ${{ steps.notification.outputs.comment-id }}
+          issue-number: ${{ env.PR_NUMBER }}
+          body: |
+            ## Uffizzi Ephemeral Environment `${{ env.OUTPUT_ID }}`
+
+            :cloud: ${{ env.EXPECTED_URL }}
+
+            :page_facing_up: [View Application Logs etc.](${{ env.OUTPUT_CONTAINERS }})
+
+            ${{ env.EXPIRATION }}
+
+            ${{ inputs.description }}
+          edit-mode: replace
+
+      - name: Check for PR Closed During Deployment
+        uses: actions/github-script@v6
+        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
+        with:
+          script: |
+            let action = process.env.UFFIZZI_ACTION;
+            const { PR_NUMBER, DEPLOYMENT_ID } = process.env;
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: PR_NUMBER
+            });
+
+            if (core.isDebug()) {
+              console.log(pr);
+            }
+
+            // `state` is either `open` or `closed`.
+            if (pr.data.state == 'open') {
+              console.log(`PR ${PR_NUMBER} remains open.`);
+            } else if (pr.data.state == 'closed') {
+              // If the PR was closed while the deployment was happening, we want to delete what we just deployed.
+              if (DEPLOYMENT_ID == '') {
+                core.warning(`PR ${PR_NUMBER} is closed but no deployment found. No operation.`);
+                action = 'none';
+              } else {
+                console.log(`PR ${PR_NUMBER} is closed and ${DEPLOYMENT_ID} found. Deleting existing deployment.`);
+                action = 'delete';
+              }
+            } else {
+              core.setFailed(`Fatal exception: PR ${PR_NUMBER} is neither \`open\` nor \`closed\` but \`${pr.data.state}\`.`);
+            }
+
+            core.exportVariable('UFFIZZI_ACTION', action);
+            return;
+
+      - name: Delete Cluster from Uffizzi
+        if: ${{ env.UFFIZZI_ACTION == 'delete' }}
+        uses: UffizziCloud/cluster-action@v2
+        with:
+          id: ${{ env.DEPLOYMENT_ID }}
+          username: ${{ inputs.username }}
+          server: ${{ inputs.server }}
+          project: ${{ inputs.project }}
+          password: ${{ secrets.password }}
+          request-token: ${{ steps.ci-job-token.outputs.request-token }}
+          request-token-url: ${{ steps.ci-job-token.outputs.request-token-url }}
+          logger-key: ${{ env.LOGGER_KEY }}
+      - name: Update Comment with Deletion
+        uses: peter-evans/create-or-update-comment@v2
+        if: ${{ env.UFFIZZI_ACTION == 'delete' }}
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ env.PR_NUMBER }}
+          body: |
+            Uffizzi Cluster `${{ env.DEPLOYMENT_ID }}` was deleted.
+          edit-mode: replace
+# ---
+# name: Uffizzi Cluster
+
+# on:
+#   # REUSABLE WORKFLOW with INPUTS
+#   # to keep this workflow simple, assumptions are made:
+#     # - Checks out a repo with a kustomization.yaml file
+#     # - Changes a image tag in the kustomization.yaml file
+#     # - Deploys to a Uffizzi Cluster
+#     # - Optionally notifies a Slack channel
+
+#   workflow_call:
+#     # allow reuse of this workflow in other repos
+#     inputs:
+#       repo:
+#         description: Kustomize repo to checkout
+#         required: true
+#         type: string
+#         # default: org/repo
+#       image:
+#         description: Image name to update in Kustomize
+#         required: true
+#         type: string
+#         # default: ghcr.io/org/repo
+#       tag:
+#         description: New tag to use for the image
+#         required: true
+#         type: string
+#       environments-root-dir:
+#         description: Root directory where all environment directories are located
+#         required: false
+#         type: string
+#         default: environments
+#       environment-dir:
+#         description: Path to the kustomization.yaml file
+#         required: true
+#         type: string
+#         # default: staging01
+#       slack-channel-id:
+#         description: Slack channel ID to post to
+#         required: false
+#         type: string
+#         # default: C0123456789
+#       pr-number:
+#         description: Pull Request Number (or other unique ID)
+#         required: true
+#         type: string
+#       operation:
+#         description: 'Specification for the operation on the cluster. Whether it needs to be created, deleted or updated.'
+#         default: 'create'
+#         required: true
+
+#     secrets:
+#       slack-token:
+#         description: Docker Hub username
+#         required: false
+#       github-token:
+#         description: Docker Hub token with write access to the repo and PRs
+#         required: true
+#       uffizzi-password:
+#         description: Uffizzi account password
+#         required: true
+
+# #    outputs:
+# #      pr-url:
+# #        description: "The newly created GitHub Pull Request URL"
+# #        value: ${{ jobs.gitops-pr.outputs.pr-url }}
+
+# # permissions: GITHUB_TOKEN are better set by the **calling** workflow
+# # but we'll set defaults here for reference
+# # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idpermissions
+# # Need `id-token: write` for OIDC: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#adding-permissions-settings
+# permissions:
+#   id-token: write
+
+# jobs:
+#   uffizzi:
+#     name: Uffizzi
+#     runs-on: ubuntu-latest
+
+# #    outputs:
+# #      pr-url: ${{ steps.cpr.outputs.pull-request-url }}
+
+#     steps:
+#       - name: Checkout ${{ inputs.repo }}
+#         uses: actions/checkout@v3
+#         with:
+#           repository: ${{ inputs.repo }}
+#           token: ${{ secrets.github-token }}
+#           ref: uffizzi
+
+#       # - name: Change image tag in kustomization.yaml
+#       #   run: |
+#       #     cd ${{ inputs.environments-root-dir }}/${{ inputs.environment-dir }}
+#       #     kustomize edit set image "$(echo '${{ inputs.image }}' | tr '[:upper:]' '[:lower:]'):${{ inputs.tag }}"
+#       #     cat kustomization.yaml
+
+#       - name: Create Uffizzi Cluster
+#         env:
+#           UFFIZZI_SERVER: https://pr-1100-deployment-29999-uffizzi-platform.app.uffizzi.com/
+#           UFFIZZI_USER: admin@uffizzi.com
+#           UFFIZZI_PASSWORD: ${{ secrets.uffizzi-password }}
+#           UFFIZZI_PROJECT: default
+#           UFFIZZI_IMAGE: uffizzi/cli:pr-239
+#           UFFIZZI_CLUSTER: pr-${{ inputs.pr-number }}
+#           UFFIZZI_OP: ${{inputs.operation}}
+#         run: |
+#           #!/bin/bash
+#           # Checking if the script received any argument
+#           if [ $# -eq 0 ]; then
+#               echo "No arguments provided"
+#               echo "[create|delete]"
+#               exit 1
+#           fi
+
+#           # Retrieve the operation from the script argument
+#           operation=$1
+
+#           # Handling the operation
+#           if [ "$operation" = "create" ]; then
+#               echo "Checking if uffizzi cluster ${UFFIZZI_CLUSTER} already exists"
+#               if docker run --rm \
+#                   --env UFFIZZI_SERVER \
+#                   --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+#                   --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+#                   ${UFFIZZI_IMAGE} cluster list | grep --quiet ${UFFIZZI_CLUSTER}
+#               # If it already exists, fetch the `kubeconfig` to connect to it.
+#               then
+#                   echo "Cluster already existsUpdating kubeconfig to point to ${UFFIZZI_CLUSTER}"
+#                   docker run --rm --env UFFIZZI_SERVER \
+#                       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+#                       --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+#                       --mount type=bind,source="$(pwd)",target=/home \
+#                   ${UFFIZZI_IMAGE} cluster update-kubeconfig \
+#                       --name=${UFFIZZI_CLUSTER} --kubeconfig="/home/kubeconfig"
+#               else
+#                   echo "Creating ..."
+#                   docker run --rm --env UFFIZZI_SERVER \
+#                       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+#                       --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+#                       --mount type=bind,source="$(pwd)",target=/home \
+#                   ${UFFIZZI_IMAGE} cluster create \
+#                       --name=${UFFIZZI_CLUSTER} --kubeconfig="/home/kubeconfig"
+#               fi
+#           elif [ "$operation" = "delete" ]; then
+#               # Insert delete logic here
+#               echo "Deleting..."
+#           else
+#               # Default case if none of the above cases match
+#               echo "Invalid operation. Please provide either 'create' or 'delete'"
+#               exit 1
+#           fi
+
+#           exit 0
+
+#       # - name: Post to a Slack channel
+#       #   id: slack
+#       #   if: ${{ inputs.slack-channel-id }}
+#       #   uses: slackapi/slack-github-action@v1
+#       #   with:
+#       #     channel-id: ${{ inputs.slack-channel-id }}
+#       #     slack-message: "PR deployed `pr-${{ inputs.pr-number }}`"
+#       #   env:
+#       #     SLACK_BOT_TOKEN: ${{ secrets.slack-token }}
