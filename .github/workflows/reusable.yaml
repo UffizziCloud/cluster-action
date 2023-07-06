@@ -265,13 +265,13 @@ jobs:
         with:
           ref: ${{ inputs.git-ref || github.event.pull_request.head.sha }}
 
-      - name: Fetch cached Compose File
-        id: cache
-        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
-        uses: actions/cache@v3
-        with:
-          path: ${{ inputs.k8s-manifest-cache-path }}
-          key: ${{ inputs.k8s-manifest-cache-key }}
+      # - name: Fetch cached Compose File
+      #   id: cache
+      #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ${{ inputs.k8s-manifest-cache-path }}
+      #     key: ${{ inputs.k8s-manifest-cache-key }}
 
       - name: Create or Update Comment with Deployment Notification
         id: notification
