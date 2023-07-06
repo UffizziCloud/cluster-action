@@ -133,7 +133,7 @@ permissions:
 
 jobs:
   uffizzi-cluster:
-    name: "Create, Update, or Delete cluster on Uffizzi"
+    name: "Create, or Delete cluster on Uffizzi"
     runs-on: ubuntu-22.04
     environment:
       name: ${{ inputs.environment }}
@@ -156,12 +156,12 @@ jobs:
           export CONTEXT_PR=${{ github.event.number }}
           export OUTPUT_PR=${INPUT_PR:-$CONTEXT_PR}
           echo "PR_NUMBER=$OUTPUT_PR" >> $GITHUB_ENV
-      - name: Predict Deployment URL
-        id: url
-        # Replace dots in the repo name with the plus sign
-        run: |
-          REPO=$(echo ${{ github.repository }} | sed 's/\./+/g')
-          echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
+      # - name: Predict Deployment URL
+      #   id: url
+      #   # Replace dots in the repo name with the plus sign
+      #   run: |
+      #     REPO=$(echo ${{ github.repository }} | sed 's/\./+/g')
+      #     echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
       - name: Obtain an a job token and an OIDC token request url from GHA
         uses: actions/github-script@v6
         id: ci-job-token
@@ -174,7 +174,7 @@ jobs:
             core.setOutput('request-token-url', runtimeUrl.trim())
 
       # Look for an existing Cluster Deployment.
-      - name: Find Deployment for this Pull Request
+      - name: Find Cluster for this Pull Request
         id: find-deployment
         uses: docker://uffizzi/cli:v2
         with:
@@ -190,6 +190,7 @@ jobs:
           ACCESS_TOKEN: ${{ secrets.access-token }}
           LOGGER_KEY: ${{ env.LOGGER_KEY }}
           CI_WORKFLOW: "true"
+
       - name: Find comment for deployment URL
         uses: peter-evans/find-comment@v2
         id: find-comment
@@ -290,9 +291,9 @@ jobs:
       - name: Deploy New Cluster
         id: create-cluster
         if: ${{ env.UFFIZZI_ACTION == 'create' }}
-        uses: UffizziCloud/cluster-action@v3
+        uses: UffizziCloud/cluster-action@reusable
         with:
-          compose-file: ${{ inputs.k8s-manifest-cache-path }}
+          k8s-manifest-file: ${{ inputs.k8s-manifest-cache-path }}
           username: ${{ inputs.username }}
           server: ${{ inputs.server }}
           project: ${{ inputs.project }}
