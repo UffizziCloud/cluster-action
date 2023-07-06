@@ -265,7 +265,7 @@ jobs:
         with:
           ref: ${{ inputs.git-ref || github.event.pull_request.head.sha }}
 
-      # - name: Fetch cached Compose File
+      # - name: Fetch cached K8s manifests File
       #   id: cache
       #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
       #   uses: actions/cache@v3
@@ -296,24 +296,10 @@ jobs:
         uses: UffizziCloud/cluster-action@reusable
         with:
           action: create
+          cluster-name: pr-$PR_NUMBER
           k8s-manifest-file: ${{ inputs.k8s-manifest-cache-path }}
-          username: ${{ inputs.username }}
           server: ${{ inputs.server }}
-          project: ${{ inputs.project }}
-          password: ${{ secrets.password }}
-          access-token: ${{ secrets.access-token }}
-          ghcr-username: ${{ github.actor }}
-          ghcr-access-token: ${{ secrets.personal-access-token }}
-          github-event-number: ${{ env.PR_NUMBER }}
-          github-ref: ${{ github.ref }}
-          github-repository: ${{ github.repository }}
-          request-token: ${{ steps.ci-job-token.outputs.request-token }}
-          request-token-url: ${{ steps.ci-job-token.outputs.request-token-url }}
-          dockerhub-username: ${{ secrets.dockerhub-username }}
-          dockerhub-password: ${{ secrets.dockerhub-password }}
           
-          logger-key: ${{ env.LOGGER_KEY }}
-
       - name: Job output consolidation
         id: outputs
         if: ${{ contains(fromJSON('["create"]'), env.UFFIZZI_ACTION) }}
