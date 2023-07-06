@@ -188,8 +188,8 @@ jobs:
         run: |
           if docker run --rm \
             --env UFFIZZI_SERVER="${{ inputs.server }}" \
-            --env REQUEST_TOKEN=${REQUEST_TOKEN} \
-            --env REQUEST_TOKEN_URL=${REQUEST_TOKEN_URL} \
+            --env REQUEST_TOKEN=$REQUEST_TOKEN \
+            --env REQUEST_TOKEN_URL=$REQUEST_TOKEN_URL \
             "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
           then
             echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
