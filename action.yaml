@@ -28,6 +28,10 @@ inputs:
     description: 'Specify whether to create or delete a cluster'
     default: 'create'
     required: false
+  request-token: 
+    required: false
+  request-token-url:
+    required: false
 
 runs:
   using: 'composite'
@@ -38,22 +42,22 @@ runs:
       # Identify if a Cluster for this PR exists.
       if docker run --rm \
         --env UFFIZZI_SERVER="${{ inputs.server }}" \
-        --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-        --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+        --env REQUEST_TOKEN="${{ inputs.request-token }}" \
+        --env REQUEST_TOKEN_URL="${{ inputs.request-token-url }}" \
         "${{ inputs.image }}" cluster list | grep --quiet '^- ${{ inputs.cluster-name }}$'
       then
         # If it already exists, fetch the `kubeconfig` to connect to it.
         docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
-          --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-          --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+          --env REQUEST_TOKEN="${{ inputs.request-token }}" \
+          --env REQUEST_TOKEN_URL="${{ inputs.request-token-url }}" \
           --mount type=bind,source="$(pwd)",target=/home \
           "${{ inputs.image }}" cluster update-kubeconfig \
           --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
       else
         # Create the Cluster if it does not yet exist.
         docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
-          --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-          --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+          --env REQUEST_TOKEN="${{ inputs.request-token }}" \
+          --env REQUEST_TOKEN_URL="${{ inputs.request-token-url }}" \
           --mount type=bind,source="$(pwd)",target=/home \
         "${{ inputs.image }}" cluster create \
           --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
