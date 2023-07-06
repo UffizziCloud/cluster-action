@@ -56,5 +56,5 @@ runs:
         sleep 3
       fi
 
-      mv ./kubeconfig "${{ inputs.kubeconfig }}"
+      mv --no-clobber ./kubeconfig "${{ inputs.kubeconfig }}"
       echo "kubeconfig file at ${{ inputs.kubeconfig }}"
