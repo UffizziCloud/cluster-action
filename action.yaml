@@ -40,7 +40,7 @@ runs:
         --env UFFIZZI_SERVER="${{ inputs.server }}" \
         --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-        "${{ inputs.image }}" cluster list | grep --quiet '^\- ${{ inputs.cluster-name }}$'
+        "${{ inputs.image }}" cluster list | grep --quiet '\- {{ inputs.cluster-name }}\$'
       then
         # If it already exists, fetch the `kubeconfig` to connect to it.
         docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
