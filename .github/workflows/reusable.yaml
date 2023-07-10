@@ -335,11 +335,11 @@ jobs:
       #   id: url-auth-for-create
       #   shell: bash
       #   run: if [ -z "${{ secrets.url-password }}" ]; then echo "No URL authentication."; else echo "URL_AUTHENTICATION=true" >> $GITHUB_ENV ; fi
-      - name: Confirm Successful Cluster Deployment
-        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == '' }}
-        run: |
-          kubectl --kubeconfig /home/kubeconfig cluster-info
-          kubectl --kubeconfig /home/kubeconfig describe-nodes
+      # - name: Confirm Successful Cluster Deployment
+      #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == '' }}
+      #   run: |
+      #     kubectl --kubeconfig /home/runner/work/quickstart-k8s/quickstart-k8s/kubeconfig cluster-info
+      #     kubectl --kubeconfig /home/runner/work/quickstart-k8s/quickstart-k8s/kubeconfig describe-nodes
       # - name: Confirm Successful Cluster Deployment with Authentication
       #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == 'true' }}
       #   uses: docker://curlimages/curl:7.87.0
@@ -353,13 +353,15 @@ jobs:
           comment-id: ${{ steps.notification.outputs.comment-id }}
           issue-number: ${{ env.PR_NUMBER }}
           body: |
-            ## Uffizzi Ephemeral Environment `${{ env.OUTPUT_ID }}`
+            ## Uffizzi Ephemeral Cluster Environment `${{ env.OUTPUT_ID }}`
 
-            :cloud: ${{ env.EXPECTED_URL }}
+            Your cluster `pr-$PR_NUMBER` was successfully created. Learn more about [Uffizzi virtual clusters](https://docs.uffizzi.com/virtual-clusters)
+            To connect to this cluster, follow these steps:
 
-            :page_facing_up: [View Application Logs etc.](${{ env.OUTPUT_CONTAINERS }})
-
-            ${{ env.EXPIRATION }}
+            1. Download and install the Uffizzi CLI
+            2. Login to Uffizzi: `uffizzi login`
+            3. Update your kubeconfig: `uffizzi cluster update-kubeconfig pr-$PR_NUMBER --kubeconfig=[KUBECONFIG]` , replacing `[KUBECONFIG]` with the path to your kubeconfig file.
+            After updating your kubeconfig, you can manage your cluster with kubectl
 
             ${{ inputs.description }}
           edit-mode: replace
