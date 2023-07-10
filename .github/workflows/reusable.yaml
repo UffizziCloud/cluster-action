@@ -335,11 +335,11 @@ jobs:
       #   id: url-auth-for-create
       #   shell: bash
       #   run: if [ -z "${{ secrets.url-password }}" ]; then echo "No URL authentication."; else echo "URL_AUTHENTICATION=true" >> $GITHUB_ENV ; fi
-      # - name: Confirm Successful Cluster Deployment
-      #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == '' }}
-      #   run: |
-      #     kubectl --kubeconfig /tmp/kubeconfig cluster-info
-      #     kubectl --kubeconfig /tmp/kubeconfig describe-nodes
+      - name: Confirm Successful Cluster Deployment
+        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == '' }}
+        run: |
+          kubectl --kubeconfig /home/kubeconfig cluster-info
+          kubectl --kubeconfig /home/kubeconfig describe-nodes
       # - name: Confirm Successful Cluster Deployment with Authentication
       #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == 'true' }}
       #   uses: docker://curlimages/curl:7.87.0
