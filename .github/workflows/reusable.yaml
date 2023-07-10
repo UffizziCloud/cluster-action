@@ -287,6 +287,12 @@ jobs:
           cluster-name: pr-$PR_NUMBER
           k8s-manifest-file: ${{ inputs.k8s-manifest-cache-path }}
           server: ${{ inputs.server }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: kubeconfig
           
       - name: Job output consolidation
         id: outputs
