@@ -355,12 +355,12 @@ jobs:
           body: |
             ## Uffizzi Ephemeral Cluster Environment `${{ env.OUTPUT_ID }}`
 
-            Your cluster `pr-$PR_NUMBER` was successfully created. Learn more about [Uffizzi virtual clusters](https://docs.uffizzi.com/virtual-clusters)
+            Your cluster `pr-${{ env.PR_NUMBER }}` was successfully created. Learn more about [Uffizzi virtual clusters](https://docs.uffizzi.com/virtual-clusters)
             To connect to this cluster, follow these steps:
 
             1. Download and install the Uffizzi CLI
             2. Login to Uffizzi: `uffizzi login`
-            3. Update your kubeconfig: `uffizzi cluster update-kubeconfig pr-$PR_NUMBER --kubeconfig=[KUBECONFIG]` , replacing `[KUBECONFIG]` with the path to your kubeconfig file.
+            3. Update your kubeconfig: `uffizzi cluster update-kubeconfig pr-${{ env.PR_NUMBER }} --kubeconfig=[KUBECONFIG]` , replacing `[KUBECONFIG]` with the path to your kubeconfig file.
             After updating your kubeconfig, you can manage your cluster with kubectl
 
             ${{ inputs.description }}
