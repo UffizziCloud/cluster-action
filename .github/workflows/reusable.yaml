@@ -169,32 +169,32 @@ jobs:
       #     echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
 
       # Look for an existing Cluster Deployment.
-      - name: Find Cluster for this Pull Request
-        id: find-deployment
-        # uses: docker://uffizzi/cli:v2
-        # with:
-        #   entrypoint: bash
-        #   args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
-        run: |
-          if docker run --rm \
-            --env UFFIZZI_SERVER="${{ inputs.server }}" \
-            --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-            --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-            "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
-          then
-            echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
-          else
-            echo DEPLOYMENT_ID='' >> $GITHUB_ENV
-            echo "Uffizzi cluster with name pr-$PR_NUMBER not found"
-          fi
-        env:
-          UFFIZZI_PASSWORD: ${{ secrets.password }}
-          UFFIZZI_SERVER: ${{ inputs.server }}
-          UFFIZZI_USER: ${{ inputs.username }}
-          UFFIZZI_PROJECT: ${{ inputs.project }}
-          ACCESS_TOKEN: ${{ secrets.access-token }}
-          LOGGER_KEY: ${{ env.LOGGER_KEY }}
-          CI_WORKFLOW: "true"
+      # - name: Find Cluster for this Pull Request
+      #   id: find-deployment
+      #   # uses: docker://uffizzi/cli:v2
+      #   # with:
+      #   #   entrypoint: bash
+      #   #   args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
+      #   run: |
+      #     if docker run --rm \
+      #       --env UFFIZZI_SERVER="${{ inputs.server }}" \
+      #       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+      #       --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+      #       "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
+      #     then
+      #       echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
+      #     else
+      #       echo DEPLOYMENT_ID='' >> $GITHUB_ENV
+      #       echo "Uffizzi cluster with name pr-$PR_NUMBER not found"
+      #     fi
+      #   env:
+      #     UFFIZZI_PASSWORD: ${{ secrets.password }}
+      #     UFFIZZI_SERVER: ${{ inputs.server }}
+      #     UFFIZZI_USER: ${{ inputs.username }}
+      #     UFFIZZI_PROJECT: ${{ inputs.project }}
+      #     ACCESS_TOKEN: ${{ secrets.access-token }}
+      #     LOGGER_KEY: ${{ env.LOGGER_KEY }}
+      #     CI_WORKFLOW: "true"
 
       - name: Find comment for deployment URL
         uses: peter-evans/find-comment@v2
