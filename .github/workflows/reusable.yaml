@@ -169,32 +169,32 @@ jobs:
       #     echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
 
       # Look for an existing Cluster Deployment.
-      - name: Find Cluster for this Pull Request
-        id: find-deployment
-        # uses: docker://uffizzi/cli:v2
-        # with:
-        #   entrypoint: bash
-        #   args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
-        run: |
-          if docker run --rm \
-            --env UFFIZZI_SERVER="${{ inputs.server }}" \
-            --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-            --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-            "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
-          then
-            echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
-          else
-            echo DEPLOYMENT_ID='' >> $GITHUB_ENV
-            echo "Uffizzi cluster with name pr-$PR_NUMBER not found"
-          fi
-        env:
-          UFFIZZI_PASSWORD: ${{ secrets.password }}
-          UFFIZZI_SERVER: ${{ inputs.server }}
-          UFFIZZI_USER: ${{ inputs.username }}
-          UFFIZZI_PROJECT: ${{ inputs.project }}
-          ACCESS_TOKEN: ${{ secrets.access-token }}
-          LOGGER_KEY: ${{ env.LOGGER_KEY }}
-          CI_WORKFLOW: "true"
+      # - name: Find Cluster for this Pull Request
+      #   id: find-deployment
+      #   # uses: docker://uffizzi/cli:v2
+      #   # with:
+      #   #   entrypoint: bash
+      #   #   args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
+      #   run: |
+      #     if docker run --rm \
+      #       --env UFFIZZI_SERVER="${{ inputs.server }}" \
+      #       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+      #       --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+      #       "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
+      #     then
+      #       echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
+      #     else
+      #       echo DEPLOYMENT_ID='' >> $GITHUB_ENV
+      #       echo "Uffizzi cluster with name pr-$PR_NUMBER not found"
+      #     fi
+      #   env:
+      #     UFFIZZI_PASSWORD: ${{ secrets.password }}
+      #     UFFIZZI_SERVER: ${{ inputs.server }}
+      #     UFFIZZI_USER: ${{ inputs.username }}
+      #     UFFIZZI_PROJECT: ${{ inputs.project }}
+      #     ACCESS_TOKEN: ${{ secrets.access-token }}
+      #     LOGGER_KEY: ${{ env.LOGGER_KEY }}
+      #     CI_WORKFLOW: "true"
 
       - name: Find comment for deployment URL
         uses: peter-evans/find-comment@v2
@@ -278,7 +278,7 @@ jobs:
             ${{ inputs.description }}
           edit-mode: replace
 
-      - name: Deploy or Update Cluster
+      - name: Deploy Cluster Update cluster credentials
         id: create-cluster
         if: ${{ env.UFFIZZI_ACTION == 'create' }} || ${{ env.UFFIZZI_ACTION == 'update' }}
         uses: UffizziCloud/cluster-action@reusable
@@ -330,16 +330,16 @@ jobs:
           echo "expiration=$EXPIRATION" >> $GITHUB_OUTPUT
           echo "expiration_timestamp=$EXPIRATION_TIMESTAMP" >> $GITHUB_OUTPUT
 
-      - name: Check if URL Authentication is in use
-        # GHA limitation workaround https://github.com/actions/runner/issues/520#issuecomment-700579336
-        id: url-auth-for-create
-        shell: bash
-        run: if [ -z "${{ secrets.url-password }}" ]; then echo "No URL authentication."; else echo "URL_AUTHENTICATION=true" >> $GITHUB_ENV ; fi
-      - name: Confirm Successful Cluster Deployment
-        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == '' }}
-        uses: docker://curlimages/curl:7.87.0
-        with:
-          args: --retry 12 --retry-all-errors --retry-delay 0 --fail --location ${{ env.OUTPUT_URL }}${{ inputs.healthcheck-url-path }}
+      # - name: Check if URL Authentication is in use
+      #   # GHA limitation workaround https://github.com/actions/runner/issues/520#issuecomment-700579336
+      #   id: url-auth-for-create
+      #   shell: bash
+      #   run: if [ -z "${{ secrets.url-password }}" ]; then echo "No URL authentication."; else echo "URL_AUTHENTICATION=true" >> $GITHUB_ENV ; fi
+      # - name: Confirm Successful Cluster Deployment
+      #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == '' }}
+      #   run: |
+      #     kubectl --kubeconfig /home/runner/work/quickstart-k8s/quickstart-k8s/kubeconfig cluster-info
+      #     kubectl --kubeconfig /home/runner/work/quickstart-k8s/quickstart-k8s/kubeconfig describe-nodes
       # - name: Confirm Successful Cluster Deployment with Authentication
       #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) && env.URL_AUTHENTICATION == 'true' }}
       #   uses: docker://curlimages/curl:7.87.0
@@ -353,52 +353,54 @@ jobs:
           comment-id: ${{ steps.notification.outputs.comment-id }}
           issue-number: ${{ env.PR_NUMBER }}
           body: |
-            ## Uffizzi Ephemeral Environment `${{ env.OUTPUT_ID }}`
+            ## Uffizzi Ephemeral Cluster Environment
 
-            :cloud: ${{ env.EXPECTED_URL }}
+            Your cluster `pr-${{ env.PR_NUMBER }}` was successfully created. Learn more about [Uffizzi virtual clusters](https://docs.uffizzi.com/virtual-clusters)
+            To connect to this cluster, follow these steps:
 
-            :page_facing_up: [View Application Logs etc.](${{ env.OUTPUT_CONTAINERS }})
-
-            ${{ env.EXPIRATION }}
+            1. Download and install the Uffizzi CLI
+            2. Login to Uffizzi: `uffizzi login`
+            3. Update your kubeconfig: `uffizzi cluster update-kubeconfig --name pr-${{ env.PR_NUMBER }} --kubeconfig=[KUBECONFIG]` , replacing `[KUBECONFIG]` with the path to your kubeconfig file.
+            After updating your kubeconfig, you can manage your cluster with kubectl
 
             ${{ inputs.description }}
           edit-mode: replace
 
-      - name: Check for PR Closed During Deployment
-        uses: actions/github-script@v6
-        if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
-        with:
-          script: |
-            let action = process.env.UFFIZZI_ACTION;
-            const { PR_NUMBER, DEPLOYMENT_ID } = process.env;
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: PR_NUMBER
-            });
+      # - name: Check for PR Closed During Deployment
+      #   uses: actions/github-script@v6
+      #   if: ${{ contains(fromJSON('["create", "update"]'), env.UFFIZZI_ACTION) }}
+      #   with:
+      #     script: |
+      #       let action = process.env.UFFIZZI_ACTION;
+      #       const { PR_NUMBER, DEPLOYMENT_ID } = process.env;
+      #       const pr = await github.rest.pulls.get({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         pull_number: PR_NUMBER
+      #       });
 
-            if (core.isDebug()) {
-              console.log(pr);
-            }
+      #       if (core.isDebug()) {
+      #         console.log(pr);
+      #       }
 
-            // `state` is either `open` or `closed`.
-            if (pr.data.state == 'open') {
-              console.log(`PR ${PR_NUMBER} remains open.`);
-            } else if (pr.data.state == 'closed') {
-              // If the PR was closed while the deployment was happening, we want to delete what we just deployed.
-              if (DEPLOYMENT_ID == '') {
-                core.warning(`PR ${PR_NUMBER} is closed but no deployment found. No operation.`);
-                action = 'none';
-              } else {
-                console.log(`PR ${PR_NUMBER} is closed and ${DEPLOYMENT_ID} found. Deleting existing deployment.`);
-                action = 'delete';
-              }
-            } else {
-              core.setFailed(`Fatal exception: PR ${PR_NUMBER} is neither \`open\` nor \`closed\` but \`${pr.data.state}\`.`);
-            }
+      #       // `state` is either `open` or `closed`.
+      #       if (pr.data.state == 'open') {
+      #         console.log(`PR ${PR_NUMBER} remains open.`);
+      #       } else if (pr.data.state == 'closed') {
+      #         // If the PR was closed while the deployment was happening, we want to delete what we just deployed.
+      #         if (DEPLOYMENT_ID == '') {
+      #           core.warning(`PR ${PR_NUMBER} is closed but no deployment found. No operation.`);
+      #           action = 'none';
+      #         } else {
+      #           console.log(`PR ${PR_NUMBER} is closed and ${DEPLOYMENT_ID} found. Deleting existing deployment.`);
+      #           action = 'delete';
+      #         }
+      #       } else {
+      #         core.setFailed(`Fatal exception: PR ${PR_NUMBER} is neither \`open\` nor \`closed\` but \`${pr.data.state}\`.`);
+      #       }
 
-            core.exportVariable('UFFIZZI_ACTION', action);
-            return;
+      #       core.exportVariable('UFFIZZI_ACTION', action);
+      #       return;
 
       - name: Delete Cluster from Uffizzi
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
