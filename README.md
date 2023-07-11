@@ -26,7 +26,8 @@ We've published a [Reusable Workflow](https://docs.github.com/en/actions/using-w
 
 ### Workflow Calling Example
 
-This example builds and publishes three images -- `vote`, `result` and `worker` to a temporary image registry for pull request events. It then creates an Uffizzi Cluster and applies the Kubernetes manifests from the repo.
+In this example, three images (`vote`, `result`, and `worker`) are built and published to a temporary image registry exclusively for pull request events. The details of the built image is then updated within the Kubernetes manifest using `Kustomize`. By following this process, the Uffizzi Cluster is created, and the Kubernetes manifests from the repository are applied.
+
 For more information see [Uffizzi Quickstart for K8s](https://github.com/UffizziCloud/quickstart-k8s/).
 
 ```yaml
@@ -178,11 +179,49 @@ jobs:
           echo "Access the result endpoint at \`pr-${{ github.event.number }}-result.app.qa-gke.uffizzi.com\`." | tee --append $GITHUB_STEP_SUMMARY
 ```
 
-### Workflow Inputs
+### Reusable Workflow Inputs
 
-#### `action`
+#### `username`
 
-(Optional) Specify whether to create or delete a cluster. Default value is "create".
+(Optional) Uffizzi username for login, usually an email address.
+
+#### `server`
+
+(Optional) Uffizzi server URL. Default value is "https://app.uffizzi.com".
+
+#### `project`
+
+(Optional) Uffizzi project name. Default value is "default".
+
+#### `pr-number`
+
+(Optional) GitHub Pull Request Number
+
+#### `git-ref`
+
+(Optional) Branch or other git reference to checkout
+
+#### `healthcheck-url-path`
+
+(Optional) URL Path to the Uffizzi Cluster URL where healthcheck would be performed. The URL Path has to start with a '/'.
+
+#### `description`
+
+(Optional) Text string added to comment on pull request issue. Default value is "What is Uffizzi? [Learn more](https://www.uffizzi.com)".
+
+#### `environment`
+
+(Optional) Custom environment for the deployed cluster. Default value is "uffizzi".
+
+#### `image`
+
+(Optional) Uffizzi CLI Image. Default value is "uffizzi/cli:v2".
+
+## Using the Action itself (not recommended)
+
+If you wish to use this action by itself outside of the reusable workflow described above, you can. The action can create or delete uClusters.
+
+### Inputs
 
 #### `server`
 
@@ -192,9 +231,18 @@ jobs:
 
 (Optional) The name of the cluster spun up by the `uffizzi cluster create` command.
 
-#### `project`
+#### `image`
 
-(Optional) Uffizzi project name. Default value is "default".
+(Optional) Uffizzi CLI Image. Default value is "uffizzi/cli:v2".
+
+#### `kubeconfig`
+
+(Optional) Path to kubeconfig file.
+
+#### `action`
+
+(Optional) Specify whether to create or delete a cluster. Default value is "create".
+
 <!-- 
 ## Uffizzi Accounts
 
