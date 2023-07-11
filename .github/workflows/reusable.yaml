@@ -395,7 +395,7 @@ jobs:
 
       - name: Delete Cluster from Uffizzi
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
-        uses: UffizziCloud/cluster-action@reusable
+        uses: UffizziCloud/cluster-action@reusable-cleanup
         with:
           action: delete
           cluster-name: pr-$PR_NUMBER
