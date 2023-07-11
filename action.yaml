@@ -33,6 +33,7 @@ runs:
   using: 'composite'
   steps:
   - shell: bash
+    # Check if the input variable `action` is create
     if: ${{ inputs.action == 'create' }}
     run: |
       # Identify if a Cluster for this PR exists.
@@ -69,6 +70,7 @@ runs:
       echo "kubeconfig file at ${{ inputs.kubeconfig }}"
   
   - shell: bash
+    # Check if the input variable `action` is delete
     if: ${{ inputs.action == 'delete' }}
     run: |
       # Identify if a Cluster for this PR exists.
