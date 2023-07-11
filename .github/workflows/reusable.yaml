@@ -161,40 +161,25 @@ jobs:
           export CONTEXT_PR=${{ github.event.number }}
           export OUTPUT_PR=${INPUT_PR:-$CONTEXT_PR}
           echo "PR_NUMBER=$OUTPUT_PR" >> $GITHUB_ENV
-      # - name: Predict Deployment URL
-      #   id: url
-      #   # Replace dots in the repo name with the plus sign
-      #   run: |
-      #     REPO=$(echo ${{ github.repository }} | sed 's/\./+/g')
-      #     echo "EXPECTED_URL=${{ inputs.server }}/github.com/$REPO/pull/$PR_NUMBER" >> $GITHUB_ENV
 
-      # Look for an existing Cluster Deployment.
-      # - name: Find Cluster for this Pull Request
-      #   id: find-deployment
-      #   # uses: docker://uffizzi/cli:v2
-      #   # with:
-      #   #   entrypoint: bash
-      #   #   args: -c "/root/docker-entrypoint.sh && echo DEPLOYMENT_ID=$(/usr/local/bundle/bin/uffizzi cluster list --filter \"github.repository=${{ github.repository }} github.event.number=$PR_NUMBER\") >> $GITHUB_ENV"
-      #   run: |
-      #     if docker run --rm \
-      #       --env UFFIZZI_SERVER="${{ inputs.server }}" \
-      #       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-      #       --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-      #       "${{ inputs.image }}" cluster list | grep --quiet '^- pr-$PR_NUMBER $'
-      #     then
-      #       echo DEPLOYMENT_ID=pr-$PR_NUMBER >> $GITHUB_ENV
-      #     else
-      #       echo DEPLOYMENT_ID='' >> $GITHUB_ENV
-      #       echo "Uffizzi cluster with name pr-$PR_NUMBER not found"
-      #     fi
-      #   env:
-      #     UFFIZZI_PASSWORD: ${{ secrets.password }}
-      #     UFFIZZI_SERVER: ${{ inputs.server }}
-      #     UFFIZZI_USER: ${{ inputs.username }}
-      #     UFFIZZI_PROJECT: ${{ inputs.project }}
-      #     ACCESS_TOKEN: ${{ secrets.access-token }}
-      #     LOGGER_KEY: ${{ env.LOGGER_KEY }}
-      #     CI_WORKFLOW: "true"
+      # Look for an existing Cluster Deployment and set DEPLOYMENT_ID necessary to determine operation
+      - name: Find Cluster for this Pull Request
+        id: find-deployment
+        run: |
+          if docker run --rm \
+            --env UFFIZZI_SERVER="${{ inputs.server }}" \
+            --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+            --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+            "${{ inputs.image }}" cluster list | grep --quiet "pr-$PR_NUMBER$"
+          then
+            echo DEPLOYMENT_ID="pr-$PR_NUMBER" >> $GITHUB_ENV
+          else
+            echo DEPLOYMENT_ID='' >> $GITHUB_ENV
+            echo "Uffizzi cluster with name pr-$PR_NUMBER not found"
+          fi
+        env:
+          LOGGER_KEY: ${{ env.LOGGER_KEY }}
+          CI_WORKFLOW: "true"
 
       - name: Find comment for deployment URL
         uses: peter-evans/find-comment@v2
@@ -281,7 +266,7 @@ jobs:
       - name: Deploy Cluster Update cluster credentials
         id: create-cluster
         if: ${{ env.UFFIZZI_ACTION == 'create' }} || ${{ env.UFFIZZI_ACTION == 'update' }}
-        uses: UffizziCloud/cluster-action@reusable
+        uses: UffizziCloud/cluster-action@reusable-cleanup
         with:
           action: create
           cluster-name: pr-$PR_NUMBER
@@ -410,17 +395,13 @@ jobs:
 
       - name: Delete Cluster from Uffizzi
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
-        uses: UffizziCloud/cluster-action@reusable
+        uses: UffizziCloud/cluster-action@reusable-cleanup
         with:
           action: delete
-          id: ${{ env.DEPLOYMENT_ID }}
-          username: ${{ inputs.username }}
+          cluster-name: pr-$PR_NUMBER
+          k8s-manifest-file: ${{ inputs.k8s-manifest-cache-path }}
           server: ${{ inputs.server }}
-          project: ${{ inputs.project }}
-          password: ${{ secrets.password }}
-          request-token: ${{ steps.ci-job-token.outputs.request-token }}
-          request-token-url: ${{ steps.ci-job-token.outputs.request-token-url }}
-          logger-key: ${{ env.LOGGER_KEY }}
+
       - name: Update Comment with Deletion
         uses: peter-evans/create-or-update-comment@v2
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
