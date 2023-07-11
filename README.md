@@ -1,12 +1,14 @@
-# On-demand Ephemeral Environments
+# Uffizzi Ephemeral Cluster Environments (Virtualized Kubernetes)
 
-Deploy a Ephemeral Environments for every pull request. Supports APIs, frontends, backends, databases, microservices, binaries and command-line tools.
+Deploy Uffizzi Ephemeral Cluster Environments (uClusters) for every pull request.
 
-Uffizzi integrates as a step in your GitHub Actions pipeline to manage on-demand, ephemeral test environments for every feature branch/pull request. Ephemeral Environments are deployed on [Uffizzi Cloud](https://uffizzi.com) (SaaS) or your own installation of [open-source Uffizzi](https://github.com/UffizziCloud/uffizzi_app) (self-hosting requires Kubernetes).
+Similar to the concept of virtual machines, Uffizzi ephemeral clusters are virtualized instances of Kubernetes clusters running on top of a host cluster. Uffizzi virtual clusters provide all the same functionality of real Kubernetes clusters, while being more convenient and efficient.
+
+Uffizzi integrates as a step in your GitHub Actions pipeline to manage on-demand, ephemeral test environments for every feature branch/pull request. Ephemeral Cluster Environments are deployed on [Uffizzi Cloud](https://uffizzi.com) (SaaS) or your own installation of [Uffizzi Enterprise](https://www.uffizzi.com//pricing) or [open-source Uffizzi](https://github.com/UffizziCloud/uffizzi_app).
 
 ## Reusable Workflow (recommended)
 
-We've published a [Reusable Workflow](https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow) for your GitHub Actions. This can handle creating, updating, and deleting Uffizzi Ephemeral Environments. It will also publish Ephemeral Environment URLs as a comment to your pull requests. 
+We've published a [Reusable Workflow](https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow) for your GitHub Actions. This can handle creating, updating, and deleting Uffizzi Ephemeral Cluster Environments. It will also publish instructions for connecting to your cluster in a comment to your pull requests. 
 
 ### Example usage
 
@@ -24,8 +26,8 @@ We've published a [Reusable Workflow](https://docs.github.com/en/actions/using-w
 
 ### Workflow Calling Example
 
-This example builds and publishes three images -- vote, result and worker to a temporary image registry for pull request events. It then creates an uffizzi cluster and applies the kubernetes manifests from the repo.
-For more information -- [Uffizzi Quickstart K8s](https://github.com/UffizziCloud/quickstart-k8s/)
+This example builds and publishes three images -- `vote`, `result` and `worker` to a temporary image registry for pull request events. It then creates an Uffizzi Cluster and applies the Kubernetes manifests from the repo.
+For more information see [Uffizzi Quickstart for K8s](https://github.com/UffizziCloud/quickstart-k8s/).
 
 ```yaml
 name: Uffizzi Cluster Example
