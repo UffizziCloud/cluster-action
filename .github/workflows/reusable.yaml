@@ -398,14 +398,10 @@ jobs:
         uses: UffizziCloud/cluster-action@reusable
         with:
           action: delete
-          id: ${{ env.DEPLOYMENT_ID }}
-          username: ${{ inputs.username }}
+          cluster-name: pr-$PR_NUMBER
+          k8s-manifest-file: ${{ inputs.k8s-manifest-cache-path }}
           server: ${{ inputs.server }}
-          project: ${{ inputs.project }}
-          password: ${{ secrets.password }}
-          request-token: ${{ steps.ci-job-token.outputs.request-token }}
-          request-token-url: ${{ steps.ci-job-token.outputs.request-token-url }}
-          logger-key: ${{ env.LOGGER_KEY }}
+
       - name: Update Comment with Deletion
         uses: peter-evans/create-or-update-comment@v2
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
