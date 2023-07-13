@@ -42,8 +42,19 @@ runs:
     # Check if the input variable `action` is create
     # if: ${{ inputs.action == 'create' }}
     run: |
-        ls
-  #     # Identify if a Cluster for this PR exists.
+      export UFFIZZI_SERVER=${{ inputs.server }}
+      export REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
+      export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
+
+      OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
+      ./uffizzi-linux-x64-TEST-1 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
+
+      if ./uffizzi-linux-x64-TEST-1 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
+      then
+        ./uffizzi-linux-x64-TEST-1 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+      else
+        ./uffizzi-linux-x64-TEST-1 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+
   #     if docker run --rm \
   #       --env UFFIZZI_SERVER="${{ inputs.server }}" \
   #       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
