@@ -12,10 +12,6 @@ inputs:
   cluster-name:
     description: 'Name of the Uffizzi cluster which is going to get created'
     required: true
-  image:
-    description: 'Uffizzi CLI image'
-    default: docker.io/uffizzi/cli:v2
-    required: false
   kubeconfig:
     description: 'Path to kubeconfig file.'
     default: ${{ github.workspace }}/kubeconfig
@@ -52,10 +48,8 @@ runs:
       # Identify if a Cluster for this PR exists.
       if ./uffizzi-linux-x86_64-TEST-6 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
-        echo "--then--"
         ./uffizzi-linux-x86_64-TEST-6 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
       else
-        echo "--else--"
         ./uffizzi-linux-x86_64-TEST-6 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
@@ -88,56 +82,3 @@ runs:
       else
         echo "Given cluster ${{ inputs.cluster-name }} does not exist"
       fi
-
-  #     if docker run --rm \
-  #       --env UFFIZZI_SERVER="${{ inputs.server }}" \
-  #       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-  #       --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-  #       "${{ inputs.image }}" cluster list | grep --quiet "${{ inputs.cluster-name }}$"
-  #     then
-  #       # If it already exists, fetch the `kubeconfig` to connect to it.
-  #       docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
-  #         --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-  #         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-  #         --mount type=bind,source="$(pwd)",target=/home \
-  #         "${{ inputs.image }}" cluster update-kubeconfig \
-  #         --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
-  #     else
-  #       # Create the Cluster if it does not yet exist.
-  #       docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
-  #         --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-  #         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-  #         --mount type=bind,source="$(pwd)",target=/home \
-  #       "${{ inputs.image }}" cluster create \
-  #         --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
-  #       echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
-  #       export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
-  #       echo "Available at \`${KUBERNETES_SERVICE_HOST}\`." | tee --append $GITHUB_STEP_SUMMARY
-  #       echo "You can access this cluster with a command like \`uffizzi cluster update-kubeconfig --name=${UFFIZZI_CLUSTER} --kubeconfig=/tmp/kubeconfig\`" | tee --append $GITHUB_STEP_SUMMARY
-  #       echo "and then \`kubectl --kubeconfig /tmp/kubeconfig\` or similar." | tee --append $GITHUB_STEP_SUMMARY
-  #       sleep 3
-  #     fi
-
-  #     mv --no-clobber ./kubeconfig "${{ inputs.kubeconfig }}"
-  #     echo "kubeconfig file at ${{ inputs.kubeconfig }}"
-  
-  # - shell: bash
-  #   # Check if the input variable `action` is delete
-  #   if: ${{ inputs.action == 'delete' }}
-  #   run: |
-  #     # Identify if a Cluster for this PR exists.
-  #     if docker run --rm \
-  #       --env UFFIZZI_SERVER="${{ inputs.server }}" \
-  #       --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-  #       --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-  #       "${{ inputs.image }}" cluster list | grep --quiet "${{ inputs.cluster-name }}$"
-  #     then
-  #       # delete the cluster if it exists
-  #       docker run --rm --env UFFIZZI_SERVER="${{ inputs.server }}" \
-  #         --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
-  #         --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-  #         --mount type=bind,source="$(pwd)",target=/home \
-  #         "${{ inputs.image }}" cluster delete "${{ inputs.cluster-name }}"
-  #     else
-  #       echo "Given cluster ${{ inputs.cluster-name }} does not exist"
-  #     fi
