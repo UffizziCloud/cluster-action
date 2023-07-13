@@ -40,7 +40,7 @@ runs:
       name: my-artifact
   - shell: bash
     # Check if the input variable `action` is create
-    # if: ${{ inputs.action == 'create' }}
+    if: ${{ inputs.action == 'create' }}
     run: |
       export UFFIZZI_SERVER=${{ inputs.server }}
       export REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
@@ -49,11 +49,42 @@ runs:
       OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
       ./uffizzi-linux-x64-TEST-1 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
 
+      # Identify if a Cluster for this PR exists.
       if ./uffizzi-linux-x64-TEST-1 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
         ./uffizzi-linux-x64-TEST-1 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
       else
         ./uffizzi-linux-x64-TEST-1 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+
+        echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
+        export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
+        echo "Available at \`${KUBERNETES_SERVICE_HOST}\`." | tee --append $GITHUB_STEP_SUMMARY
+        echo "You can access this cluster with a command like \`uffizzi cluster update-kubeconfig --name=${UFFIZZI_CLUSTER} --kubeconfig=/tmp/kubeconfig\`" | tee --append $GITHUB_STEP_SUMMARY
+        echo "and then \`kubectl --kubeconfig /tmp/kubeconfig\` or similar." | tee --append $GITHUB_STEP_SUMMARY
+        sleep 3
+      fi
+
+      mv --no-clobber ./kubeconfig "${{ inputs.kubeconfig }}"
+      echo "kubeconfig file at ${{ inputs.kubeconfig }}"
+
+  - shell: bash
+    # Check if the input variable `action` is delete
+    if: ${{ inputs.action == 'delete' }}
+    run: |
+      export UFFIZZI_SERVER=${{ inputs.server }}
+      export REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
+      export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
+
+      OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
+      ./uffizzi-linux-x64-TEST-1 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
+
+      # Identify if a Cluster for this PR exists.
+      if ./uffizzi-linux-x64-TEST-1 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
+      then
+        # delete the cluster if it exists
+        ./uffizzi-linux-x64-TEST-1 cluster delete "${{ inputs.cluster-name }}"
+      else
+        echo "Given cluster ${{ inputs.cluster-name }} does not exist"
       fi
 
   #     if docker run --rm \
