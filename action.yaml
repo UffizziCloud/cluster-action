@@ -52,8 +52,10 @@ runs:
       # Identify if a Cluster for this PR exists.
       if ./uffizzi-linux-x86_64-TEST-6 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
+        echo "--then--"
         ./uffizzi-linux-x86_64-TEST-6 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
       else
+        echo "--else--"
         ./uffizzi-linux-x86_64-TEST-6 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
