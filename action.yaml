@@ -47,14 +47,14 @@ runs:
       export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
 
       OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
-      ./uffizzi-linux-x64-TEST-1 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
+      ./uffizzi-linux-x86_64-TEST-6 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
 
       # Identify if a Cluster for this PR exists.
-      if ./uffizzi-linux-x64-TEST-1 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
+      if ./uffizzi-linux-x86_64-TEST-6 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
-        ./uffizzi-linux-x64-TEST-1 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+        ./uffizzi-linux-x86_64-TEST-6 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
       else
-        ./uffizzi-linux-x64-TEST-1 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+        ./uffizzi-linux-x86_64-TEST-6 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
         export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
@@ -76,13 +76,13 @@ runs:
       export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
 
       OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
-      ./uffizzi-linux-x64-TEST-1 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
+      ./uffizzi-linux-x86_64-TEST-6 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
 
       # Identify if a Cluster for this PR exists.
-      if ./uffizzi-linux-x64-TEST-1 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
+      if ./uffizzi-linux-x86_64-TEST-6 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
         # delete the cluster if it exists
-        ./uffizzi-linux-x64-TEST-1 cluster delete "${{ inputs.cluster-name }}"
+        ./uffizzi-linux-x86_64-TEST-6 cluster delete "${{ inputs.cluster-name }}"
       else
         echo "Given cluster ${{ inputs.cluster-name }} does not exist"
       fi
