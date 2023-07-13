@@ -50,9 +50,10 @@ runs:
       then
         ./uffizzi-linux-x86_64-TEST-6 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
       else
-        touch /home/kubeconfig
-        sudo chmod 777 /home/kubeconfig
-        sudo chown $(whoami) /home/kubeconfig
+        chmod 777 uffizzi-linux-x86_64-TEST-6
+        # touch /home/kubeconfig
+        # sudo chmod 777 /home/kubeconfig
+        # sudo chown $(whoami) /home/kubeconfig
         ./uffizzi-linux-x86_64-TEST-6 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
