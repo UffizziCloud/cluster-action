@@ -266,7 +266,7 @@ jobs:
       - name: Deploy Cluster Update cluster credentials
         id: create-cluster
         if: ${{ env.UFFIZZI_ACTION == 'create' }} || ${{ env.UFFIZZI_ACTION == 'update' }}
-        uses: UffizziCloud/cluster-action@reusable-cleanup
+        uses: UffizziCloud/cluster-action@main
         with:
           action: create
           cluster-name: pr-$PR_NUMBER
@@ -332,7 +332,7 @@ jobs:
       # Delete cluster
       - name: Delete Cluster from Uffizzi
         if: ${{ env.UFFIZZI_ACTION == 'delete' }}
-        uses: UffizziCloud/cluster-action@reusable-cleanup
+        uses: UffizziCloud/cluster-action@main
         with:
           action: delete
           cluster-name: pr-$PR_NUMBER
