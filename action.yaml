@@ -54,6 +54,7 @@ runs:
         ./uffizzi-linux-x64-TEST-1 cluster update-kubeconfig --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
       else
         ./uffizzi-linux-x64-TEST-1 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /home/kubeconfig
+      fi
 
   #     if docker run --rm \
   #       --env UFFIZZI_SERVER="${{ inputs.server }}" \
