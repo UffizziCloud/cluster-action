@@ -1,5 +1,5 @@
-name: 'k8s cluster Preview Environments'
-description: 'k8s cluster Preview Environments for every pull request. Supports APIs, frontends, backends, databases, and microservices.'
+name: 'Virtual Kubernetes Cluster'
+description: 'Create or delete a virtual cluster on Uffizzi'
 author: 'Vibhav Bobade'
 branding:
   color: 'yellow'
