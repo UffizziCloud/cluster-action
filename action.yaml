@@ -1,5 +1,5 @@
 name: 'Virtual Kubernetes Cluster'
-description: 'Create or delete a virtual cluster on Uffizzi'
+description: 'Create or delete a virtual cluster ephemeral environment on Uffizzi'
 author: 'Vibhav Bobade'
 branding:
   color: 'yellow'
