@@ -6,7 +6,33 @@ Similar to the concept of virtual machines, Uffizzi ephemeral clusters are virtu
 
 Uffizzi integrates as a step in your GitHub Actions pipeline to manage on-demand, ephemeral test environments for every feature branch/pull request. Ephemeral Cluster Environments are deployed on [Uffizzi Cloud](https://uffizzi.com) (SaaS) or your own installation of [Uffizzi Enterprise](https://www.uffizzi.com//pricing) or [open-source Uffizzi](https://github.com/UffizziCloud/uffizzi_app).
 
-## Reusable Workflow (recommended)
+## Using the Action (recommended usage)
+
+If you wish to use this action by itself outside of the reusable workflow described above, you can. The action can create or delete uClusters.
+
+### Inputs
+
+#### `server`
+
+(Optional) `https://app.uffizzi.com/` or the URL of your Uffizzi installation.
+
+#### `cluster-name`
+
+(Optional) The name of the cluster spun up by the `uffizzi cluster create` command.
+
+#### `image`
+
+(Optional) Uffizzi CLI Image. Default value is "uffizzi/cli:v2".
+
+#### `kubeconfig`
+
+(Optional) Path to kubeconfig file.
+
+#### `action`
+
+(Optional) Specify whether to create or delete a cluster. Default value is "create".
+
+## Reusable Workflow (alternate usage)
 
 We've published a [Reusable Workflow](https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow) for your GitHub Actions. This can handle creating, updating, and deleting Uffizzi Ephemeral Cluster Environments. It will also publish instructions for connecting to your cluster in a comment to your pull requests. 
 
@@ -216,32 +242,6 @@ jobs:
 #### `image`
 
 (Optional) Uffizzi CLI Image. Default value is "uffizzi/cli:v2".
-
-## Using the Action itself (not recommended)
-
-If you wish to use this action by itself outside of the reusable workflow described above, you can. The action can create or delete uClusters.
-
-### Inputs
-
-#### `server`
-
-(Optional) `https://app.uffizzi.com/` or the URL of your Uffizzi installation.
-
-#### `cluster-name`
-
-(Optional) The name of the cluster spun up by the `uffizzi cluster create` command.
-
-#### `image`
-
-(Optional) Uffizzi CLI Image. Default value is "uffizzi/cli:v2".
-
-#### `kubeconfig`
-
-(Optional) Path to kubeconfig file.
-
-#### `action`
-
-(Optional) Specify whether to create or delete a cluster. Default value is "create".
 
 <!-- 
 ## Uffizzi Accounts
