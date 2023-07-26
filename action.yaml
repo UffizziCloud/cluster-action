@@ -42,16 +42,20 @@ runs:
       export REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
       export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
 
+      echo "Login error"
       OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
       ./uffizzi-linux-x86_64-TEST-6 login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
 
       chmod 777 uffizzi-linux-x86_64-TEST-6
 
       # Identify if a Cluster for this PR exists.
+      echo "Hello"
       if ./uffizzi-linux-x86_64-TEST-6 cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
+        echo "Hello2"
         ./uffizzi-linux-x86_64-TEST-6 cluster update-kubeconfig "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
       else
+        echo "Hello3"
         ./uffizzi-linux-x86_64-TEST-6 cluster create --name "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
