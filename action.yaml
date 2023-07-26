@@ -29,7 +29,7 @@ runs:
   using: 'composite'
   steps:
   - name: Setup binary
-    uses: UffizziCloud/setup-action@setup-binary
+    uses: UffizziCloud/setup-action@main
   - name: Download Artifact
     uses: actions/download-artifact@v3
     with:
