@@ -52,7 +52,7 @@ runs:
           --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
           "${{ inputs.image }}" cluster update-kubeconfig "${{ inputs.cluster-name }}" --kubeconfig /tmp/kubeconfig
 
-        docker cp cluster_container:/tmp/kubeconfig ./kubeconfig
+        docker cp cluster_container:/tmp/kubeconfig "${{ inputs.kubeconfig }}"
       else
         docker run \
           --env UFFIZZI_SERVER="${{ inputs.server }}" --name cluster_container \
@@ -60,7 +60,7 @@ runs:
           --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
           "${{ inputs.image }}" cluster create --name "${{ inputs.cluster-name }}" --kubeconfig /tmp/kubeconfig
 
-        docker cp cluster_container:/tmp/kubeconfig ./kubeconfig
+        docker cp cluster_container:/tmp/kubeconfig "${{ inputs.kubeconfig }}"
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
         export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
@@ -70,7 +70,6 @@ runs:
         sleep 3
       fi
 
-      mv --no-clobber ./kubeconfig "${{ inputs.kubeconfig }}"
       echo "kubeconfig file at ${{ inputs.kubeconfig }}"
 
   - shell: bash
