@@ -272,6 +272,7 @@ jobs:
           cluster-name: pr-$PR_NUMBER
           k8s-manifest-file: ${{ inputs.k8s-manifest-cache-path }}
           server: ${{ inputs.server }}
+          image: ${{ inputs.image }}
 
       # Upload kubeconfig 
       - name: Upload artifact

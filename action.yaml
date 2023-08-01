@@ -24,6 +24,9 @@ inputs:
     description: 'Specify whether to create or delete a cluster'
     default: 'create'
     required: false
+  image:
+    description: 'Uffizzi CLI image'
+    required: true
 
 runs:
   using: 'composite'
@@ -33,22 +36,28 @@ runs:
   - shell: bash
     # Check if the input variable `action` is create
     if: ${{ inputs.action == 'create' }}
+    env:
+      LOGGER_KEY: ${{ env.LOGGER_KEY }}
+      CI_WORKFLOW: "true"
     run: |
-      export UFFIZZI_SERVER=${{ inputs.server }}
-      export REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
-      export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
-
-      OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
-      ./uffizzi-linux login_by_identity_token --oidc-token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
-
-      chmod 777 uffizzi-linux
-
-      # Identify if a Cluster for this PR exists.
-      if ./uffizzi-linux cluster list | grep --quiet "${{ inputs.cluster-name }}$"
+      if docker run --rm \
+        --env UFFIZZI_SERVER="${{ inputs.server }}" \
+        --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+        --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+        "${{ inputs.image }}" cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
-        ./uffizzi-linux cluster update-kubeconfig "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
+        docker run --rm \
+          --env UFFIZZI_SERVER="${{ inputs.server }}" \
+          --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+          --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+          "${{ inputs.image }}" cluster update-kubeconfig "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
       else
-        ./uffizzi-linux cluster create --name "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
+        docker run --rm \
+          --env UFFIZZI_SERVER="${{ inputs.server }}" \
+          --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+          --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+          "${{ inputs.image }}" cluster create --name "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
+
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
         export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
@@ -65,18 +74,19 @@ runs:
     # Check if the input variable `action` is delete
     if: ${{ inputs.action == 'delete' }}
     run: |
-      export UFFIZZI_SERVER=${{ inputs.server }}
-      export REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
-      export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
-
-      OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
-      ./uffizzi-linux login_by_identity_token --oidc-token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
-
       # Identify if a Cluster for this PR exists.
-      if ./uffizzi-linux cluster list | grep --quiet "${{ inputs.cluster-name }}$"
+      if docker run --rm \
+        --env UFFIZZI_SERVER="${{ inputs.server }}" \
+        --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+        --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+        "${{ inputs.image }}" cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
         # delete the cluster if it exists
-        ./uffizzi-linux cluster delete "${{ inputs.cluster-name }}"
+        docker run --rm \
+          --env UFFIZZI_SERVER="${{ inputs.server }}" \
+          --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
+          --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
+          "${{ inputs.image }}" cluster delete "${{ inputs.cluster-name }}"
       else
         echo "Given cluster ${{ inputs.cluster-name }} does not exist"
       fi
