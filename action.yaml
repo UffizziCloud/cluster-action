@@ -54,7 +54,7 @@ runs:
 
         docker cp cluster_container:/tmp/kubeconfig "${{ inputs.kubeconfig }}"
       else
-        docker run \
+        docker run --name=cluster_container \
           --env UFFIZZI_SERVER="${{ inputs.server }}" --name cluster_container \
           --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
           --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
