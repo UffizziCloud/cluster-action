@@ -43,7 +43,7 @@ runs:
       export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
 
       OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
-      ./uffizzi-linux login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
+      ./uffizzi-linux login_by_identity_token --oidc-token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
 
       chmod 777 uffizzi-linux
 
@@ -74,7 +74,7 @@ runs:
       export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
 
       OIDC_TOKEN=$(curl -sLS "${REQUEST_TOKEN_URL}&audience=uffizzi" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $REQUEST_TOKEN")
-      ./uffizzi-linux login_by_identity_token --token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
+      ./uffizzi-linux login_by_identity_token --oidc-token "${OIDC_TOKEN}" --server "${UFFIZZI_SERVER}"
 
       # Identify if a Cluster for this PR exists.
       if ./uffizzi-linux cluster list | grep --quiet "${{ inputs.cluster-name }}$"
