@@ -20,7 +20,7 @@ on:
         type: string
       server:
         description: "Uffizzi server URL"
-        default: https://app.qa-gke.uffizzi.com
+        default: https://app.uffizzi.com
         required: false
         type: string
       project:

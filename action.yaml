@@ -8,7 +8,7 @@ inputs:
   server:
     description: 'URL to Uffizzi'
     required: false
-    default: 'https://app.qa-gke.uffizzi.com/'
+    default: 'https://app.uffizzi.com/'
   cluster-name:
     description: 'Name of the Uffizzi cluster which is going to get created'
     required: true
