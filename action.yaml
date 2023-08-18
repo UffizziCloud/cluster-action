@@ -29,11 +29,7 @@ runs:
   using: 'composite'
   steps:
   - name: Setup binary
-    uses: UffizziCloud/setup-action@refactor
-  # - name: Download Artifact
-  #   uses: actions/download-artifact@v3
-  #   with:
-  #     name: my-artifact
+    uses: UffizziCloud/setup-action@main
   - shell: bash
     # Check if the input variable `action` is create
     if: ${{ inputs.action == 'create' }}
