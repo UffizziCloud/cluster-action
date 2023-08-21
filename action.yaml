@@ -31,8 +31,8 @@ inputs:
 runs:
   using: 'composite'
   steps:
-  - name: Setup binary
-    uses: UffizziCloud/setup-action@main
+  # - name: Setup binary
+  #   uses: UffizziCloud/setup-action@main
   - shell: bash
     # Check if the input variable `action` is create
     if: ${{ inputs.action == 'create' }}
