@@ -18,7 +18,7 @@ If you wish to use this action by itself outside of the reusable workflow descri
 
 #### `cluster-name`
 
-(Optional) The name of the cluster spun up by the `uffizzi cluster create` command.
+(Required) The name of the cluster spun up by the `uffizzi cluster create` command.
 
 #### `image`
 
