@@ -29,7 +29,7 @@ runs:
   using: 'composite'
   steps:
   - name: Setup binary
-    uses: UffizziCloud/setup-action@main
+    uses: UffizziCloud/setup-action@test-324
   - shell: bash
     # Check if the input variable `action` is create
     if: ${{ inputs.action == 'create' }}
@@ -48,7 +48,7 @@ runs:
       then
         ./uffizzi-linux cluster update-kubeconfig "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
       else
-        ./uffizzi-linux cluster create --name "${{ inputs.cluster-name }}" --kubeconfig kubeconfig --creation-source=github_actions
+        ./uffizzi-linux cluster create "${{ inputs.cluster-name }}" --kubeconfig kubeconfig --creation-source=github_actions
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
         export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
