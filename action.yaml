@@ -29,7 +29,7 @@ runs:
   using: 'composite'
   steps:
   - name: Setup binary
-    uses: UffizziCloud/setup-action@main
+    uses: UffizziCloud/setup-action@test/324_cli
   - shell: bash
     # Check if the input variable `action` is create
     if: ${{ inputs.action == 'create' }}
