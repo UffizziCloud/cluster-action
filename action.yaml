@@ -61,7 +61,7 @@ runs:
           --env UFFIZZI_SERVER="${{ inputs.server }}" --name cluster_container \
           --env REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN} \
           --env REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL} \
-          "${{ inputs.image }}" cluster create "${{ inputs.cluster-name }}" --k8s-vesion="${{ inputs.k8s-version }}" --kubeconfig /tmp/kubeconfig --creation-source=github_actions
+          "${{ inputs.image }}" cluster create "${{ inputs.cluster-name }}" --k8s-version="${{ inputs.k8s-version }}" --kubeconfig /tmp/kubeconfig --creation-source=github_actions
 
         docker cp cluster_container:/tmp/kubeconfig "${{ inputs.kubeconfig }}"
 
