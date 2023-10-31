@@ -24,6 +24,10 @@ inputs:
     description: 'Specify whether to create or delete a cluster'
     default: 'create'
     required: false
+  version:
+    description: 'Specify the version of kubernetes you want to create'
+    required: false
+
 
 runs:
   using: 'composite'
@@ -34,6 +38,16 @@ runs:
     # Check if the input variable `action` is create
     if: ${{ inputs.action == 'create' }}
     run: |
+      function kubernetes_version_flag() {
+          local kubernetes_version=${{ inputs.version }}
+      
+          if [ -n "$kubernetes_version" ]; then
+          echo "--k8s-version $kubernetes_version"
+          else
+          echo $kubernetes_version
+          fi
+      }
+      
       export UFFIZZI_SERVER=${{ inputs.server }}
       export REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
       export REQUEST_TOKEN_URL=${ACTIONS_ID_TOKEN_REQUEST_URL}
@@ -48,7 +62,8 @@ runs:
       then
         ./uffizzi-linux cluster update-kubeconfig "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
       else
-        ./uffizzi-linux cluster create "${{ inputs.cluster-name }}" --kubeconfig kubeconfig --creation-source=github_actions
+        k8s_version_flag=kubernetes_version_flag()
+        ./uffizzi-linux cluster create "${{ inputs.cluster-name }}" --kubeconfig kubeconfig --creation-source=github_actions $k8s_version_flag
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
         export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./kubeconfig | cut -d'/' -f3`
