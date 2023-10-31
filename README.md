@@ -34,7 +34,11 @@ If you wish to use this action by itself outside of the reusable workflow descri
 
 #### `k8s-version`
 
-(Optionoal) Version of the kubernetes cluster to be created. Only works with "create" action.
+(Optional) Version of the kubernetes cluster to be created. Only works with "create" action.
+
+#### `kubeconfig-name`
+
+(Optional) Name of the kubeconfig file which is created
 
 ## Reusable Workflow (alternate usage)
 
