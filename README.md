@@ -32,6 +32,10 @@ If you wish to use this action by itself outside of the reusable workflow descri
 
 (Optional) Specify whether to create or delete a cluster. Default value is "create".
 
+#### `k8s-version`
+
+(Optionoal) Version of the kubernetes cluster to be created. Only works with "create" action.
+
 ## Reusable Workflow (alternate usage)
 
 We've published a [Reusable Workflow](https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow) for your GitHub Actions. This can handle creating, updating, and deleting Uffizzi Ephemeral Cluster Environments. It will also publish instructions for connecting to your cluster in a comment to your pull requests. 

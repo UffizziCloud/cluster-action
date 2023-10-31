@@ -24,7 +24,7 @@ inputs:
     description: 'Specify whether to create or delete a cluster'
     default: 'create'
     required: false
-  version:
+  k8s-version:
     description: 'Specify the version of kubernetes you want to create'
     required: false
 
@@ -39,7 +39,7 @@ runs:
     if: ${{ inputs.action == 'create' }}
     run: |
       function kubernetes_version_flag() {
-          local kubernetes_version=${{ inputs.version }}
+          local kubernetes_version=${{ inputs.k8s-version }}
       
           if [ -n "$kubernetes_version" ]; then
           echo "--k8s-version $kubernetes_version"
