@@ -71,10 +71,10 @@ runs:
       # Identify if a Cluster for this PR exists.
       if ./uffizzi-linux cluster list | grep --quiet "${{ inputs.cluster-name }}$"
       then
-        ./uffizzi-linux cluster update-kubeconfig "${{ inputs.cluster-name }}" $kubeconfig_flag
+        ./uffizzi-linux cluster update-kubeconfig "${{ inputs.cluster-name }}" --kubeconfig kubeconfig
       else
         k8s_version_flag=$kubernetes_version_flag
-        ./uffizzi-linux cluster create "${{ inputs.cluster-name }}" --creation-source=github_actions $kubeconfig_flag $k8s_version_flag
+        ./uffizzi-linux cluster create "${{ inputs.cluster-name }}" --creation-source=github_actions --kubeconfig kubeconfig $k8s_version_flag
 
         echo "Uffizzi Cluster \`${{ inputs.cluster-name }}\` created." | tee --append $GITHUB_STEP_SUMMARY
         export KUBERNETES_SERVICE_HOST=`yq '.clusters[0].cluster.server' < ./${{ inputs.kubeconfig-name }} | cut -d'/' -f3`
