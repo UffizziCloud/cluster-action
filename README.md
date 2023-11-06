@@ -1,10 +1,10 @@
-# Uffizzi Ephemeral Cluster Environments (Virtualized Kubernetes)
+# Uffizzi Virtual Clusters
 
-Deploy Uffizzi Ephemeral Cluster Environments (uClusters) for every pull request.
+Deploy Uffizzi Virtual Clusters (uClusters) for every pull request.
 
-Similar to the concept of virtual machines, Uffizzi ephemeral clusters are virtualized instances of Kubernetes clusters running on top of a host cluster. Uffizzi virtual clusters provide all the same functionality of real Kubernetes clusters, while being more convenient and efficient.
+Similar to the concept of virtual machines, Uffizzi virtual clusters are virtualized instances of Kubernetes clusters running on top of a host cluster. Uffizzi virtual clusters provide all the same functionality of real Kubernetes clusters, while being more convenient and efficient.
 
-Uffizzi integrates as a step in your GitHub Actions pipeline to manage on-demand, ephemeral test environments for every feature branch/pull request. Ephemeral Cluster Environments are deployed on [Uffizzi Cloud](https://uffizzi.com) (SaaS) or your own installation of [Uffizzi Enterprise](https://www.uffizzi.com//pricing) or [open-source Uffizzi](https://github.com/UffizziCloud/uffizzi_app).
+Uffizzi integrates as a step in your GitHub Actions pipeline to manage on-demand, ephemeral test environments for every feature branch/pull request. Virtual Cluster Environments are deployed on [Uffizzi Cloud](https://uffizzi.com) (SaaS) or your own installation of [Uffizzi Enterprise](https://www.uffizzi.com//pricing) or [open-source Uffizzi](https://github.com/UffizziCloud/uffizzi_app).
 
 ## Using the Action (recommended usage)
 
