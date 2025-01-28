@@ -84,7 +84,7 @@ runs:
         sleep 3
       fi
 
-      mv --force ./kubeconfig "${{ inputs.kubeconfig }}"
+      mv --update ./kubeconfig "${{ inputs.kubeconfig }}"
       echo "kubeconfig file at ${{ inputs.kubeconfig }}"
 
   - shell: bash
